@@ -152,6 +152,18 @@
       await pace();
     }
     if (task.formats && task.formats.length) {
+      if (task.formats.includes('PDF')) {
+        await chrome.runtime.sendMessage({ type: 'progress', taskId: task.id, text: 'Ustawianie „Pokaż na stronie” na 50 dla PDF…' });
+        await KsefPageSize.ensure50({
+          waitFor,
+          allowMissing: !!ev && typeof ev.count === 'number' && ev.count <= 50,
+          waitForReload: mark => waitFor(() => invoiceEvents.find(event => event.at >= mark &&
+            event.path === location.pathname && event.take === 50 && event.skip === 0 &&
+            KsefCalendar.normalizeDate(event.from) === iso(task.from) &&
+            KsefCalendar.normalizeDate(event.to) === iso(task.to)), 30000)
+        });
+        await pace();
+      }
       // "Pobierz" takes at most one page (up to 50 invoices), so go through every page with "›".
       const firstRow = () => ((qs('table[data-testid^="invoices-table-"] tbody tr') || {}).innerText || '').trim();
       for (let n = 1; n <= 100; n++) {

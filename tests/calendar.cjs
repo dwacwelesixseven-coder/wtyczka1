@@ -95,12 +95,14 @@ function calendarFixture(initial, final, allowedClicks = [final]) {
     fetch:async()=>({clone:()=>({json:async()=>({data:{GetInvoices:{DateRange:{DateFrom:'2026-10-01',DateTo:'2026-10-31'},FilteredCount:8,Items:[]}}})})})};
   const context={window:win,location:{origin:'https://app.symfonia.pl',pathname:event.path}};
   vm.createContext(context);vm.runInContext(fs.readFileSync(require.resolve('../extension/hook.js'),'utf8'),context);
-  await win.fetch('/graphql',{body:JSON.stringify({operationName:'GetInvoices'})});
+  await win.fetch('/graphql',{body:JSON.stringify({operationName:'GetInvoices',variables:{Take:50,Skip:0}})});
   await new Promise(resolve=>setImmediate(resolve));
   const count=messages.length;
   listener({source:win,origin:context.location.origin,data:{__ksefSnapshotRequest:true}});
   assert.equal(messages.length,count+1);
   assert.equal(messages.at(-1).data.path,event.path);
+  assert.equal(messages.at(-1).data.take,50);
+  assert.equal(messages.at(-1).data.skip,0);
   context.location.pathname='/company/b/purchase';
   listener({source:win,origin:context.location.origin,data:{__ksefSnapshotRequest:true}});
   assert.equal(messages.length,count+1);

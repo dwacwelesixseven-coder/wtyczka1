@@ -18,7 +18,7 @@
     try { return JSON.parse(init && init.body).operationName || null; } catch (e) { return null; }
   }
 
-  function inspect(op, json, path) {
+  function inspect(op, json, path, pagination) {
     const d = json && json.data;
     if (!d) return;
     if (d.UserTenantsList) {
@@ -36,6 +36,8 @@
       latestInvoices = {
         op,
         path,
+        take: pagination.take,
+        skip: pagination.skip,
         from: d.GetInvoices.DateRange.DateFrom,
         to: d.GetInvoices.DateRange.DateTo,
         count: d.GetInvoices.FilteredCount,
@@ -49,11 +51,16 @@
   window.fetch = function (input, init) {
     const url = typeof input === 'string' ? input : (input && input.url) || '';
     const path = location.pathname;
+    let pagination = {};
+    try {
+      const variables = JSON.parse(init?.body).variables;
+      pagination = { take: variables?.Take, skip: variables?.Skip };
+    } catch (_) {}
     const p = origFetch.apply(this, arguments);
     if (/\/graphql/.test(url)) {
       const op = opName(init);
       if (!op || /UserTenantsList|GetInvoices$/.test(op)) {
-        p.then((res) => res.clone().json().then((j) => inspect(op, j, path)).catch(() => {})).catch(() => {});
+        p.then((res) => res.clone().json().then((j) => inspect(op, j, path, pagination)).catch(() => {})).catch(() => {});
       }
     }
     return p;

@@ -69,3 +69,8 @@ W nowym pasku akcji Symfonii identyfikator pobierania znajduje się na kontenerz
 
 Prawidłowa data już ustawiona w polu jest pomijana. Kalendarz Symfonii nie zgłasza zmiany po kliknięciu już wybranego dnia, dlatego wcześniejsza wersja mogła zatrzymać się na prawidłowej dacie od przed poprawieniem daty do. Po zmianie dat pola są odczytywane ponownie z bieżącej strony.
 
+
+## Wersja 1.0.9: 50 pozycji dla PDF
+
+Przed pobieraniem faktur w PDF wtyczka ustawia Pokaż na stronie na 50 i czeka na odświeżenie listy z serwera. Dla zestawu PDF + XML ustawienie 50 pozostaje wspólne. Pobieranie samego XML nie zmienia rozmiaru strony. Gdy lista ma więcej niż 50 pozycji, kolejne strony nadal są pobierane oddzielnie. Testy: node tests/page-size.cjs.
+
