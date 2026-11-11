@@ -131,13 +131,26 @@ function Invoke-KsefUpdate([string]$Root) {
         if ((Get-VersionTuple $remote.version) -le (Get-VersionTuple $local.version)) {
             return @{ ok = $true; updated = $false; version = $local.version; message = 'Masz aktualna wersje.' }
         }
+        # main is only a cheap version hint. Resolve it once and download both
+        # manifest and ZIP by immutable commit SHA, so CDN caches or a concurrent
+        # publication cannot mix files from two different releases.
+        $referenceFile = Join-Path $temp 'reference.json'
+        Get-RemoteFile ('https://api.github.com/repos/dwacwelesixseven-coder/wtyczka1/git/ref/heads/main?check=' + $check) $referenceFile 1MB
+        $reference = Get-Content -LiteralPath $referenceFile -Raw -Encoding UTF8 | ConvertFrom-Json
+        $commit = [string]$reference.object.sha
+        if ($commit -notmatch '^[0-9a-f]{40}$') { throw 'Nie udalo sie ustalic wersji repozytorium GitHub.' }
+        Get-RemoteFile ('https://raw.githubusercontent.com/dwacwelesixseven-coder/wtyczka1/' + $commit + '/extension/manifest.json') $remoteFile 1MB
+        $remote = Read-ExtensionManifest $temp
+        if ((Get-VersionTuple $remote.version) -le (Get-VersionTuple $local.version)) {
+            return @{ ok = $true; updated = $false; version = $local.version; message = 'Masz aktualna wersje.' }
+        }
         $archive = Join-Path $temp 'release.zip'
-        Get-RemoteFile ('https://codeload.github.com/dwacwelesixseven-coder/wtyczka1/zip/refs/heads/main?check=' + $check) $archive 20MB
+        Get-RemoteFile ('https://codeload.github.com/dwacwelesixseven-coder/wtyczka1/zip/' + $commit) $archive 20MB
         $candidate = Join-Path $temp 'candidate'
         New-Item -ItemType Directory -Path $candidate | Out-Null
         Expand-ExtensionArchive $archive $candidate
         $m = Read-ExtensionManifest $candidate
-        if ($m.version -ne $remote.version) { throw 'Release changed during download. Will retry later.' }
+        if ($m.version -ne $remote.version) { throw 'Archiwum aktualizacji nie odpowiada wersji manifestu. Zachowano poprzednia wersje.' }
         $updated = Install-ExtensionCandidate $candidate $Root
         return @{ ok = $true; updated = $updated; version = $m.version; message = 'Aktualizacja gotowa. Odswiez otwarte strony Symfonii.' }
     } finally {
