@@ -53,10 +53,8 @@
   }
 
   const iso = (d) => d.split('-').reverse().join('-'); // dd-mm-yyyy -> yyyy-mm-dd
-  const selCounter = () => { const m = document.body.innerText.match(/\n\s*(\d+) z (\d+)\s*\n/); return m ? [+m[1], +m[2]] : null; };
 
   function headCheckbox() { return qs('[data-testid$="-head-selectExpandPin"] input[type=checkbox]'); }
-  function rowsChecked() { return qsa('table[data-testid^="invoices-table-"] tbody input[type=checkbox]:checked').length; }
   function pagination() { return qs('[data-test-element="pagination"]'); }
   function nextPageButton() {
     const p = pagination();
@@ -115,53 +113,27 @@
     return res;
   }
 
-  // The selection bar has icon-only buttons. On the sales list the same arrow icon is used
-  // for "send to KSeF" and for "Pobierz", so the button is chosen ONLY by its tooltip text.
-  function tooltipTexts() {
-    return qsa('[role=tooltip],[data-testid*="ooltip"],[class*="ooltip"]').map((e) => e.innerText.trim()).filter(Boolean);
-  }
-  function hover(el, on) {
-    const r = el.getBoundingClientRect();
-    const types = on ? ['pointerover', 'pointerenter', 'mouseover', 'mouseenter'] : ['pointerout', 'pointerleave', 'mouseout', 'mouseleave'];
-    [el.parentElement, el].forEach((t) => types.forEach((ty) => t.dispatchEvent(new (ty.startsWith('pointer') ? PointerEvent : MouseEvent)(ty, { bubbles: !/enter|leave/.test(ty), clientX: r.x + 4, clientY: r.y + 4 }))));
-  }
-  async function findDownloadButton() {
-    const candidates = qsa('button').filter((b) => !b.disabled && !b.closest('tbody') && b.querySelector('svg[data-icon]') && b.getAttribute('data-test-element') === 'utility-button');
-    for (const b of candidates) {
-      // start from a clean state so an old tooltip cannot be mistaken for this button's
-      if (!(await waitFor(() => tooltipTexts().length === 0, 1500, 100))) continue;
-      hover(b, true);
-      const tips = (await waitFor(() => { const t = tooltipTexts(); return t.length ? t : null; }, 1200, 100)) || [];
-      hover(b, false);
-      await waitFor(() => tooltipTexts().length === 0, 1500, 100);
-      if (tips.some((t) => /ksef|wysł|wysl|wyśl/i.test(t))) continue;
-      if (tips.length && tips.every((t) => t === 'Pobierz')) return b;
-    }
-    return null;
-  }
-
-  async function downloadPage(format, label) {
+  async function downloadPage(format, label, taskId) {
+    const progress = text => chrome.runtime.sendMessage({ type: 'progress', taskId, text });
+    await progress('Zaznaczanie faktur na stronie…');
     const head = headCheckbox();
     if (!head) throw new Error('Nie znalazłem pola „zaznacz wszystkie”.');
     if (!head.checked) realClick(head.parentElement);
-    const sel = await waitFor(() => { const c = selCounter(); return c && c[0] > 0 && c[0] === c[1] ? c : null; }, 8000);
-    if (!sel) throw new Error('Nie udało się zaznaczyć wszystkich faktur na stronie.');
+    const count = await waitFor(() => KsefDownload.selectedCount(), 8000);
+    if (!count) throw new Error('Nie udało się zaznaczyć wszystkich faktur na stronie.');
     await pace();
-    const pub = await findDownloadButton();
-    if (!pub) throw new Error('Nie znalazłem przycisku „Pobierz” (sprawdzam po podpisie, żeby nie kliknąć „Wyślij do KSeF”).');
-    pub.click();
-    const tid = format === 'XML' ? 'downloadInvoiceXMLMultipleAction' : 'downloadInvoicePDFMultipleAction';
-    const opt = await waitFor(() => qs('[data-testid="' + tid + '"]'), 5000);
-    if (!opt) throw new Error('Nie pojawiło się menu „Pobierz fakturę (' + format + ')”.');
+    await progress('Otwieranie menu Pobierz (' + format + ')…');
+    const opt = await KsefDownload.openMenu(format, { waitFor });
     const done = expectDownload(label, 180000);
     await pace();
+    await progress('Oczekiwanie na plik ZIP z fakturami ' + format + '…');
     opt.click();
     const res = await done;
     // leave the page as it was: clear the selection
     const h2 = headCheckbox();
     if (h2 && h2.checked) { realClick(h2.parentElement); await sleep(400); }
     if (!res || !res.ok) throw new Error('Faktury (' + format + ') się nie pobrały (' + ((res && res.error) || 'brak pliku') + ').');
-    return sel[0];
+    return count;
   }
 
   async function runTask(task) {
@@ -184,7 +156,7 @@
       const firstRow = () => ((qs('table[data-testid^="invoices-table-"] tbody tr') || {}).innerText || '').trim();
       for (let n = 1; n <= 100; n++) {
         for (const f of task.formats) {
-          const count = await downloadPage(f, 'zip|' + f + '|' + n);
+          const count = await downloadPage(f, 'zip|' + f + '|' + n, task.id);
           if (f === task.formats[0]) result.invoices += count;
           result.zips++;
           await pace();

@@ -54,3 +54,8 @@ Instalator rejestruje teraz pomocnika także dla Chrome i Opery. Jeśli wcześni
 
 Wtyczka wybiera daty przez kalendarz Symfonii, potwierdza filtr na podstawie odpowiedzi listy i rozpoznaje zakres ustawiony wcześniej. Nie wpisuje już cyfr do maskowanych pól. Przycisk Zatrzymaj jest dostępny także przy wstrzymanym zadaniu, żeby można było pobrać poprawkę bez rozpoczynania kolejnego zadania. Testy regresji: node tests/calendar.cjs. Po aktualizacji odśwież kartę Symfonii przed wznowieniem pracy.
 
+
+## Poprawka 1.0.6: menu Pobierz
+
+Akcja pobierania jest rozpoznawana po identyfikatorze downloadInvoiceMultipleAction, również gdy jest ikoną span zamiast przycisku. Zaznaczenie jest potwierdzane przez pola wierszy tabeli. Dziennik pokazuje etap zaznaczania, otwierania menu i oczekiwania na plik ZIP. Testy: node tests/downloads.cjs.
+

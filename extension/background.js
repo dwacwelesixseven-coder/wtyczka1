@@ -118,6 +118,13 @@ chrome.downloads.onChanged.addListener((d) => {
 chrome.runtime.onMessage.addListener((msg, sender, reply) => {
   (async () => {
     if (msg.type === 'checkUpdate') return reply(await checkKsefUpdate());
+    if (msg.type === 'progress') {
+      const run = await getState();
+      if (run?.active && !run.paused && sender.tab?.id === run.tabId && run.tasks[run.idx]?.id === msg.taskId) {
+        await log(String(msg.text || '').slice(0, 180));
+      }
+      return reply(true);
+    }
     if (globalThis.ksefUpdateBusy && ['start', 'resume', 'skip'].includes(msg.type)) {
       return reply({ ok: false, error: 'Trwa aktualizacja wtyczki. Sprobuj ponownie za chwile.' });
     }
