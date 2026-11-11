@@ -16,10 +16,14 @@
   const invoiceEvents = [];
   window.addEventListener('message', (ev) => {
     const m = ev.data;
-    if (ev.source !== window || !m || !m.__ksef) return;
+    if (ev.source !== window || ev.origin !== location.origin || !m || !m.__ksef) return;
     if (m.type === 'companies') chrome.runtime.sendMessage({ type: 'companies', companies: m.data });
-    if (m.type === 'invoices') invoiceEvents.push(Object.assign({ at: Date.now() }, m.data));
+    if (m.type === 'invoices' && m.data.path === location.pathname) {
+      invoiceEvents.push(Object.assign({ at: Date.now() }, m.data));
+      if (invoiceEvents.length > 60) invoiceEvents.splice(0, invoiceEvents.length - 60);
+    }
   });
+  window.postMessage({ __ksefSnapshotRequest: true }, location.origin);
 
   // Learn the company of the page we are on, in case the company list was not captured.
   function learnCompany() {
@@ -48,23 +52,6 @@
       .forEach(([t, T]) => el.dispatchEvent(new T(t, Object.assign({ pointerId: 1, pointerType: 'mouse', isPrimary: true }, o))));
   }
 
-  // The date fields are masked inputs: type digit by digit, confirm with Enter, leave the field.
-  async function typeDate(input, ddmmyyyy) {
-    input.focus();
-    await sleep(80);
-    document.execCommand('selectAll');
-    document.execCommand('delete');
-    await sleep(60);
-    for (const ch of ddmmyyyy.replace(/-/g, '')) { document.execCommand('insertText', false, ch); await sleep(35); }
-    await sleep(120);
-    const k = { key: 'Enter', code: 'Enter', keyCode: 13, which: 13, bubbles: true };
-    input.dispatchEvent(new KeyboardEvent('keydown', k));
-    input.dispatchEvent(new KeyboardEvent('keyup', k));
-    input.blur();
-    await sleep(250);
-    return input.value === ddmmyyyy;
-  }
-
   const iso = (d) => d.split('-').reverse().join('-'); // dd-mm-yyyy -> yyyy-mm-dd
   const selCounter = () => { const m = document.body.innerText.match(/\n\s*(\d+) z (\d+)\s*\n/); return m ? [+m[1], +m[2]] : null; };
 
@@ -87,17 +74,25 @@
     const toIn = qs('[data-testid$="DateOfIssue-DateTo"] input');
     if (!fromIn || !toIn) throw new Error('Nie znalazłem pól z datą wystawienia.');
     await sleep(1500); // let the default list load first
-    const mark = Date.now();
+    const confirmed = () => KsefCalendar.rangeConfirmed(fromIn, toIn, from, to,
+      invoiceEvents, location.pathname, byText('button', 'Zastosuj'));
+    const existing = confirmed();
+    if (existing) return existing;
     // When the new start is after the current end, set the end first (keeps the range valid).
-    if (iso(from) > iso(toIn.value || '0000')) { await typeDate(toIn, to); await typeDate(fromIn, from); }
-    else { await typeDate(fromIn, from); await typeDate(toIn, to); }
+    if (iso(from) > iso(toIn.value || '0000')) {
+      await KsefCalendar.selectDate(toIn, to);
+      await KsefCalendar.selectDate(fromIn, from);
+    } else {
+      await KsefCalendar.selectDate(fromIn, from);
+      await KsefCalendar.selectDate(toIn, to);
+    }
     await pace();
     const apply = byText('button', 'Zastosuj');
-    if (apply) apply.click();
-    const ev = await waitFor(() => invoiceEvents.find((e) => e.at >= mark && e.from === iso(from) && e.to === iso(to)), 30000);
+    if (apply && !apply.disabled) apply.click();
+    window.postMessage({ __ksefSnapshotRequest: true }, location.origin);
+    const ev = await waitFor(confirmed, 30000);
     if (!ev) {
-      if (fromIn.value === from && toIn.value === to && !byText('button', 'Zastosuj')) return null; // filter set, count unknown
-      throw new Error('Nie udało się ustawić zakresu dat ' + from + ' – ' + to + '.');
+      throw new Error('Nie udało się potwierdzić zakresu dat ' + from + ' – ' + to + '. Odśwież stronę Symfonii i spróbuj ponownie.');
     }
     return ev;
   }

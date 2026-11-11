@@ -49,3 +49,8 @@ Instrukcja pobierania faktur: `extension/INSTRUKCJA.txt` (opis instalacji z tamt
 ## Poprawka 1.0.4: Opera / Opera GX
 
 Instalator rejestruje teraz pomocnika także dla Chrome i Opery. Jeśli wcześniej zainstalowano pakiet 1.0.3 w Operze, pobierz obecny ZIP i uruchom ponownie ZAINSTALUJ.cmd. Folder wtyczki i jej dane zostaną zachowane. Następnie kliknij Sprawdź teraz; w razie potrzeby uruchom ponownie przeglądarkę. Komunikat błędu pokazuje teraz dokładny powód niepowodzenia.
+
+## Poprawka 1.0.5: wybieranie dat
+
+Wtyczka wybiera daty przez kalendarz Symfonii, potwierdza filtr na podstawie odpowiedzi listy i rozpoznaje zakres ustawiony wcześniej. Nie wpisuje już cyfr do maskowanych pól. Przycisk Zatrzymaj jest dostępny także przy wstrzymanym zadaniu, żeby można było pobrać poprawkę bez rozpoczynania kolejnego zadania. Testy regresji: node tests/calendar.cjs. Po aktualizacji odśwież kartę Symfonii przed wznowieniem pracy.
+

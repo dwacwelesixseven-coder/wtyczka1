@@ -101,7 +101,7 @@ async function render() {
   $('progTitle').textContent = run.paused ? 'Wstrzymane' : run.active ? 'Pobieranie – ' + monthLabel(run.month) : 'Zakończone – ' + monthLabel(run.month);
   $('progCount').textContent = done + ' / ' + total;
   $('bar').style.width = (total ? (done / total) * 100 : 0) + '%';
-  $('stop').hidden = !run.active || run.paused;
+  $('stop').hidden = !run.active;
   $('resume').hidden = !run.paused;
   $('skip').hidden = !run.paused;
   $('newRun').hidden = !!busy;
