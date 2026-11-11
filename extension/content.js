@@ -134,7 +134,9 @@
     if (!count) throw new Error('Nie udało się zaznaczyć wszystkich faktur na stronie.');
     await pace();
     await progress('Otwieranie menu Pobierz (' + format + ')…');
-    const opt = await KsefDownload.openMenu(format, { waitFor });
+    const opt = await KsefDownload.openMenu(format, { waitFor,
+      onRetry: attempt => progress('Ponowne otwieranie menu Pobierz (' + format + ', próba ' + attempt + '/3)…')
+    });
     const done = expectDownload(label, 180000);
     await pace();
     await progress('Oczekiwanie na plik ZIP z fakturami ' + format + '…');

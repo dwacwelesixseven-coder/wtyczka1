@@ -109,3 +109,8 @@ Wyszukiwanie przycisku Eksportuj nie zależy już wyłącznie od oznaczeń okna 
 
 Naprawiono błędną granicę słowa w rozpoznawaniu tytułu XLS. Odczyt textContent łączy tekst nagłówka i opisu bez separatora, np. XLSCzy chcesz, przez co wersje 1.0.14 i 1.0.15 mogły odrzucać widoczny i aktywny przycisk Eksportuj. Test obejmuje dokładnie taki połączony tekst oraz wywołanie całego kroku eksportu.
 
+
+## Wersja 1.0.17: ponawianie menu Pobierz
+
+Otwieranie menu pobierania PDF/XML jest ponawiane maksymalnie trzy razy. Każda próba ponownie wyszukuje aktualny element paska akcji, pomija odłączone i nieaktywne elementy i czeka na opcję do 10 sekund. Ponawiane jest tylko otwarcie menu, nie pobieranie pliku. Jeżeli menu już jest otwarte, wtyczka go nie zamyka kolejnym kliknięciem. Dziennik pokazuje kolejne próby.
+

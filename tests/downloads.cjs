@@ -44,6 +44,46 @@ const node = (extra = {}) => ({ getClientRects:()=>[1], getAttribute:()=>null, .
   await assert.rejects(openMenu('PDF',{document:{querySelectorAll:s=>s.includes('downloadInvoiceMultipleAction')?[hidden,disabled]:[]},waitFor}),/Nie znalazłem/);
   assert.equal(wrongClicks,0);
   console.log('PASS: hidden or disabled download actions are not clicked');
+  function retryFixture(openAfter=2) {
+    let opened=false,clicks=0;
+    const retries=[];
+    const item=node();
+    const trigger=node({click(){clicks++;if(clicks>=openAfter)opened=true;}});
+    const doc={querySelectorAll:selector=>{
+      if(selector==='[data-testid="downloadInvoiceMultipleAction"]')return [trigger];
+      if(selector==='[data-testid="downloadInvoicePDFMultipleAction"]')return opened?[item]:[];
+      return [];
+    }};
+    return {document:doc,waitFor,sleep:async()=>{},onRetry:async attempt=>retries.push(attempt),
+      retries,item,trigger,clicks:()=>clicks};
+  }
+  const retry=retryFixture();
+  assert.equal(await openMenu('PDF',retry),retry.item);
+  assert.equal(retry.clicks(),2);assert.deepEqual(retry.retries,[2]);
+  console.log('PASS: ignored first menu click is retried using the current action');
+  const never=retryFixture(100);
+  await assert.rejects(openMenu('PDF',never),/po 3 próbach/);
+  assert.equal(never.clicks(),3);assert.deepEqual(never.retries,[2,3]);
+  console.log('PASS: retries are bounded and each retry is reported');
+
+  let actionQueries=0,oldClicks=0,newClicks=0,replacementOpen=false;
+  const stale=node({click(){oldClicks++;}}),replacementItem=node();
+  const fresh=node({click(){newClicks++;replacementOpen=true;}});
+  const replacementDoc={querySelectorAll:selector=>{
+    if(selector==='[data-testid="downloadInvoiceMultipleAction"]')return [++actionQueries===1?stale:fresh];
+    if(selector==='[data-testid="downloadInvoicePDFMultipleAction"]')return replacementOpen?[replacementItem]:[];
+    return [];
+  }};
+  assert.equal(await openMenu('PDF',{document:replacementDoc,waitFor,sleep:async()=>{}}),replacementItem);
+  assert.equal(oldClicks,0);assert.equal(newClicks,1);
+  console.log('PASS: toolbar replacement during await does not leave a stale click target');
+
+  const otherFormat=retryFixture(100);
+  const otherQuery=otherFormat.document.querySelectorAll;
+  otherFormat.document.querySelectorAll=selector=>selector.includes('],')?[node()]:otherQuery(selector);
+  await assert.rejects(openMenu('PDF',otherFormat),/opcja PDF jest nieaktywna lub niedostępna/);
+  assert.equal(otherFormat.clicks(),1);assert.deepEqual(otherFormat.retries,[]);
+  console.log('PASS: an already open menu with missing PDF option is not toggled closed repeatedly');
   const row = node();
   const boxes = [node({checked:true,closest:()=>row}),node({checked:true,closest:()=>row})];
   const doc = {querySelectorAll:()=>boxes};
