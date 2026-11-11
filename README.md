@@ -59,3 +59,8 @@ Wtyczka wybiera daty przez kalendarz Symfonii, potwierdza filtr na podstawie odp
 
 Akcja pobierania jest rozpoznawana po identyfikatorze downloadInvoiceMultipleAction, również gdy jest ikoną span zamiast przycisku. Zaznaczenie jest potwierdzane przez pola wierszy tabeli. Dziennik pokazuje etap zaznaczania, otwierania menu i oczekiwania na plik ZIP. Testy: node tests/downloads.cjs.
 
+
+## Poprawka 1.0.7: właściwy element kliknięcia
+
+W nowym pasku akcji Symfonii identyfikator pobierania znajduje się na kontenerze div. Wtyczka klika teraz umieszczony w nim przycisk, który faktycznie otwiera menu. Test obejmuje kontener bez obsługi kliknięcia oraz przycisk wewnętrzny, także wyłączony.
+

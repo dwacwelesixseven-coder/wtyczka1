@@ -22,6 +22,22 @@ const node = (extra = {}) => ({ getClientRects:()=>[1], getAttribute:()=>null, .
     assert.equal(downloadClicks,1,'do not toggle an already open menu closed');
     console.log('PASS: exact non-button download action opens',format,'without clicking send-to-KSeF');
   }
+  // Match Symfonia TableGroupAction: data-testid is on a DIV; only the
+  // child ButtonUtility opens the menu. Parent clicks do not flow down.
+  let wrapperClicks = 0, buttonClicks = 0, menuOpen = false;
+  const nestedButton = node({ matches:()=>true, click(){buttonClicks++;menuOpen=true;} });
+  const wrapper = node({matches:()=>false,querySelector:()=>nestedButton,click(){wrapperClicks++;}});
+  const menuItem = node({matches:()=>true});
+  const wrappedDoc = {querySelectorAll:selector=>selector==='[data-testid="downloadInvoiceMultipleAction"]'
+    ? [wrapper] : menuOpen ? [menuItem] : []};
+  assert.equal(await openMenu('PDF',{document:wrappedDoc,waitFor}),menuItem);
+  assert.equal(buttonClicks,1);
+  assert.equal(wrapperClicks,0);
+  console.log('PASS: wrapper DIV is resolved to its actual nested download button');
+  menuOpen=false; nestedButton.disabled=true;
+  await assert.rejects(openMenu('PDF',{document:wrappedDoc,waitFor}),/Nie znalazłem/);
+  assert.equal(buttonClicks,1);
+  console.log('PASS: disabled nested button is not clicked through an enabled wrapper');
   let wrongClicks = 0;
   const hidden = node({getClientRects:()=>[],click(){wrongClicks++}});
   const disabled = node({getAttribute:()=> 'true',click(){wrongClicks++}});
