@@ -98,18 +98,26 @@
     return ev;
   }
 
-  async function exportXls(label) {
-    const ctl = await waitFor(() => qs('[data-testid$="-table-control"]'), 10000);
-    if (!ctl) throw new Error('Nie znalazłem menu ⋮ listy.');
-    ctl.click();
-    const item = await waitFor(() => qs('[data-testid="invoices-export-xls"]'), 5000);
-    if (!item) throw new Error('Nie znalazłem „Eksportuj listę XLS”.');
+  async function exportXls(label, taskId) {
+    const exportButton = () => KsefReport.findExportButton();
+    if (!exportButton()) {
+      const ctl = await waitFor(() => qs('[data-testid$="-table-control"]'), 10000);
+      if (!ctl) throw new Error('Nie znalazłem menu ⋮ listy.');
+      ctl.click();
+      const item = await waitFor(() => qs('[data-testid="invoices-export-xls"]'), 5000);
+      if (!item) throw new Error('Nie znalazłem „Eksportuj listę XLS”.');
+      await pace();
+      item.click();
+    }
+    await chrome.runtime.sendMessage({ type: 'progress', taskId, text: 'Oczekiwanie na aktywny przycisk Eksportuj w oknie XLS…' });
+    if (!(await waitFor(exportButton, 25000))) throw new Error('Nie znalazłem aktywnego przycisku „Eksportuj” w widocznym oknie raportu XLS (25 s).');
     await pace();
-    item.click();
-    const ok = await waitFor(() => byText('button', 'Eksportuj', qs('[data-testid="modal"]') || document), 8000);
-    if (!ok) throw new Error('Nie pojawiło się okno eksportu.');
+    // The modal can be re-rendered while the report is prepared.
+    const ok = await waitFor(exportButton, 5000);
+    if (!ok) throw new Error('Okno raportu XLS zostało zamknięte lub przycisk „Eksportuj” jest nieaktywny.');
     const done = expectDownload(label, 90000);
-    await pace();
+    await sleep(200); // allow the worker to register the expected download
+    await chrome.runtime.sendMessage({ type: 'progress', taskId, text: 'Eksportowanie raportu XLS…' });
     ok.click();
     const res = await done;
     if (!res || !res.ok) throw new Error('Eksport XLS się nie pobrał (' + ((res && res.error) || 'brak pliku') + ').');
@@ -150,7 +158,7 @@
       return result;
     }
     if (task.report) {
-      await exportXls('report');
+      await exportXls('report', task.id);
       result.reportOk = true;
       await pace();
     }

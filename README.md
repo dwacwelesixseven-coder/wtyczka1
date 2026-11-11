@@ -94,3 +94,8 @@ Po zakończeniu całego zadania oraz przy błędzie wstrzymującym pobieranie wt
 
 Przed wyborem daty wtyczka czeka na widoczne, aktywne pole i zakończenie blokady interakcji podczas ładowania strony (do 30 sekund). Przy nieudanym otwarciu kalendarza ponownie wyszukuje bieżące pole i ikonę, wykonując maksymalnie trzy próby. Dziennik pokazuje próby oraz nazwę pola od/do. Testy obejmują opóźnione odblokowanie pola i zignorowane pierwsze kliknięcie.
 
+
+## Wersja 1.0.14: rozpoznawanie okna eksportu XLS
+
+Wtyczka szuka widocznego okna Eksport raportu do pliku XLS/XLSX i aktywnego przycisku Eksportuj. Pomija inne i ukryte okna, rozpoznaje różne oznaczenia modalu oraz czeka na przycisk do 25 sekund. Jeśli właściwe okno już jest otwarte, wykorzystuje je bez ponownego otwierania menu. Testy: node tests/report-export.cjs.
+
