@@ -125,7 +125,7 @@ function Invoke-KsefUpdate([string]$Root) {
         New-Item -ItemType Directory -Path $temp | Out-Null
         $remoteFile = Join-Path $temp 'manifest.json'
         # GitHub's CDN may cache main for several minutes after publication.
-        $check = [DateTime]::UtcNow.ToString('yyyyMMddHHmm')
+        $check = [guid]::NewGuid().ToString('N')
         Get-RemoteFile ('https://raw.githubusercontent.com/dwacwelesixseven-coder/wtyczka1/main/extension/manifest.json?check=' + $check) $remoteFile 1MB
         $remote = Read-ExtensionManifest $temp
         if ((Get-VersionTuple $remote.version) -le (Get-VersionTuple $local.version)) {
