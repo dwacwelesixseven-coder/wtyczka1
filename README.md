@@ -24,6 +24,10 @@ Instalator kopiuje pliki do folderu bieżącego użytkownika i dodaje wpis pomoc
 - Po udanej aktualizacji wtyczka przeładowuje się. Otwarte strony Symfonii trzeba odświeżyć, żeby zaczęły używać nowego kodu strony.
 - Awaria sieci nie usuwa działającej wersji. Próba powtarza się przy kolejnym sprawdzeniu.
 
+Używaj tej instalacji w jednym profilu Edge na koncie Windows. Ochrona przed aktualizacją w trakcie pobierania dotyczy bieżącego profilu. Dodanie nowych uprawnień w przyszłej wersji może wymagać zatwierdzenia w Edge.
+
+Weryfikacja pakietu: sprawdzono składnię JS/PowerShell, aktualizację, blokadę obniżenia wersji i zmiany tożsamości, kopię zapasową, odtworzenie po błędzie kopiowania, obsługę niebezpiecznych ścieżek ZIP oraz protokół komunikacji pomocnika. Pełna instalacja i aktualizacja w rzeczywistym Edge wymagają jeszcze sprawdzenia po publikacji repozytorium.
+
 ## Publikowanie nowej wersji przez autora
 
 1. Zmień pliki w katalogu **extension/**, zachowując `auto-update.js`, jego import w `background.js` i obsługę komunikatu `checkUpdate` oraz blokadę rozpoczynania pracy w trakcie aktualizacji.

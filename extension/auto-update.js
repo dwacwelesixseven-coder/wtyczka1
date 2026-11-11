@@ -10,7 +10,9 @@ async function checkKsefUpdate() {
     const { run, autoUpdatesEnabled = true } = await chrome.storage.local.get(['run', 'autoUpdatesEnabled']);
     if (!autoUpdatesEnabled) return { ok: true, skipped: true, message: 'Automatyczne aktualizacje są wyłączone.' };
     // A paused run also keeps its existing code until the user stops it.
-    if (run?.active) return { ok: true, skipped: true, message: 'Aktualizacja poczeka na zakończenie pobierania faktur.' };
+    if (run?.active || (typeof pending !== 'undefined' && pending.length > 0)) {
+      return { ok: true, skipped: true, message: 'Aktualizacja poczeka na zakończenie pobierania faktur.' };
+    }
     const result = await new Promise((resolve, reject) => {
       const port = chrome.runtime.connectNative('com.ksef_pobieranie.updater');
       let answered = false;

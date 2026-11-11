@@ -33,7 +33,7 @@ try {
     $registryPath = 'Software\Microsoft\Edge\NativeMessagingHosts\com.ksef_pobieranie.updater'
     $registryKey = [Microsoft.Win32.Registry]::CurrentUser.CreateSubKey($registryPath)
     try { $registryKey.SetValue('', $hostFile, [Microsoft.Win32.RegistryValueKind]::String) } finally { $registryKey.Dispose() }
-    Set-Clipboard -Value $extension
+    try { Set-Clipboard -Value $extension } catch { Write-Host 'Nie udalo sie skopiowac sciezki do schowka. Skopiuj ja recznie.' }
     Write-Host ''
     Write-Host 'Gotowe. Folder wtyczki skopiowano do schowka:'
     Write-Host $extension
