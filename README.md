@@ -82,7 +82,7 @@ Archiwa ZIP z PDF-ami są zapisywane w Pobrane/KSeF/RRRR-MM/Nazwa firmy/. Raport
 
 ## Wersja 1.0.11: spójna aktualizacja
 
-Pomocnik ustala jedno konkretne zatwierdzenie repozytorium i z niego pobiera zarówno manifest, jak i archiwum ZIP. Eliminuje to mieszanie wersji przy zmianie gałęzi main lub różnym czasie odświeżenia pamięci podręcznej GitHuba. Numer z main jest tylko wstępną wskazówką; publiczne API GitHuba jest wywoływane dopiero po wykryciu nowszej wersji. Zainstalowane wcześniej pomocniki wymagają ponownego uruchomienia ZAINSTALUJ.cmd z nowego pakietu. Dane i postęp są zachowane. Test: powershell -NoProfile -File tests/updater-snapshot.ps1.
+Pomocnik ustala jedno konkretne zatwierdzenie repozytorium i z niego pobiera zarówno manifest, jak i archiwum ZIP. Eliminuje to mieszanie wersji przy zmianie gałęzi main lub różnym czasie odświeżenia pamięci podręcznej GitHuba. Każde sprawdzenie ustala aktualne zatwierdzenie przez publiczne API GitHuba, a następnie odczytuje manifest tego zatwierdzenia. Publiczne API podlega limitom GitHuba; po chwilowym błędzie wtyczka ponawia sprawdzenie przy następnym wywołaniu. Zainstalowane wcześniej pomocniki wymagają ponownego uruchomienia ZAINSTALUJ.cmd z nowego pakietu. Dane i postęp są zachowane. Test: powershell -NoProfile -File tests/updater-snapshot.ps1.
 
 
 ## Wersja 1.0.12: powiadomienia i dźwięk

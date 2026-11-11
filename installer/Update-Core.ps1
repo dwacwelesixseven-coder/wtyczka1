@@ -124,16 +124,10 @@ function Invoke-KsefUpdate([string]$Root) {
         $temp = Join-Path $Root ('stage-' + [guid]::NewGuid().ToString('N'))
         New-Item -ItemType Directory -Path $temp | Out-Null
         $remoteFile = Join-Path $temp 'manifest.json'
-        # GitHub's CDN may cache main for several minutes after publication.
         $check = [guid]::NewGuid().ToString('N')
-        Get-RemoteFile ('https://raw.githubusercontent.com/dwacwelesixseven-coder/wtyczka1/main/extension/manifest.json?check=' + $check) $remoteFile 1MB
-        $remote = Read-ExtensionManifest $temp
-        if ((Get-VersionTuple $remote.version) -le (Get-VersionTuple $local.version)) {
-            return @{ ok = $true; updated = $false; version = $local.version; message = 'Masz aktualna wersje.' }
-        }
-        # main is only a cheap version hint. Resolve it once and download both
-        # manifest and ZIP by immutable commit SHA, so CDN caches or a concurrent
-        # publication cannot mix files from two different releases.
+        # Resolve main through the API first. Raw branch URLs can remain stale
+        # for several minutes, even with a cache-busting query parameter.
+        # Both subsequent downloads use the same immutable commit SHA.
         $referenceFile = Join-Path $temp 'reference.json'
         Get-RemoteFile ('https://api.github.com/repos/dwacwelesixseven-coder/wtyczka1/git/ref/heads/main?check=' + $check) $referenceFile 1MB
         $reference = Get-Content -LiteralPath $referenceFile -Raw -Encoding UTF8 | ConvertFrom-Json

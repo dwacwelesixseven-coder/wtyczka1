@@ -30,7 +30,6 @@ $script:requests = @()
 # Simulate main advancing to a newer version while the fixed commit stays 1.0.11.
 function Get-RemoteFile([string]$Url, [string]$Destination, [long]$Limit) {
     $script:requests += $Url
-    if ($Url -match '/main/extension/manifest.json') { Write-Version $Destination '1.0.12'; return }
     if ($Url -match '/git/ref/heads/main') {
         [IO.File]::WriteAllText($Destination, ('{"object":{"sha":"' + $script:commit + '"}}')); return
     }
@@ -44,7 +43,7 @@ function Get-RemoteFile([string]$Url, [string]$Destination, [long]$Limit) {
 }
 $result = Invoke-KsefUpdate $installedRoot
 if (-not $result.updated -or $result.version -ne '1.0.11') { throw 'Snapshot update failed.' }
-if ($script:requests.Count -ne 4) { throw 'Unexpected download count.' }
+if ($script:requests.Count -ne 3) { throw 'Unexpected download count.' }
 if (@($script:requests | Where-Object { $_ -match '/zip/refs/heads/' }).Count) { throw 'Mutable branch archive requested.' }
 if ((Read-ExtensionManifest (Join-Path $installedRoot 'previous-extension')).version -ne '1.0.10') { throw 'Backup not preserved.' }
 Write-Output 'PASS: changing branch metadata cannot mix pinned manifest and archive; backup preserved.'
