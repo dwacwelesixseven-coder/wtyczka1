@@ -124,13 +124,15 @@ function Invoke-KsefUpdate([string]$Root) {
         $temp = Join-Path $Root ('stage-' + [guid]::NewGuid().ToString('N'))
         New-Item -ItemType Directory -Path $temp | Out-Null
         $remoteFile = Join-Path $temp 'manifest.json'
-        Get-RemoteFile 'https://raw.githubusercontent.com/dwacwelesixseven-coder/wtyczka1/main/extension/manifest.json' $remoteFile 1MB
+        # GitHub's CDN may cache main for several minutes after publication.
+        $check = [DateTime]::UtcNow.ToString('yyyyMMddHHmm')
+        Get-RemoteFile ('https://raw.githubusercontent.com/dwacwelesixseven-coder/wtyczka1/main/extension/manifest.json?check=' + $check) $remoteFile 1MB
         $remote = Read-ExtensionManifest $temp
         if ((Get-VersionTuple $remote.version) -le (Get-VersionTuple $local.version)) {
             return @{ ok = $true; updated = $false; version = $local.version; message = 'Masz aktualna wersje.' }
         }
         $archive = Join-Path $temp 'release.zip'
-        Get-RemoteFile 'https://codeload.github.com/dwacwelesixseven-coder/wtyczka1/zip/refs/heads/main' $archive 20MB
+        Get-RemoteFile ('https://codeload.github.com/dwacwelesixseven-coder/wtyczka1/zip/refs/heads/main?check=' + $check) $archive 20MB
         $candidate = Join-Path $temp 'candidate'
         New-Item -ItemType Directory -Path $candidate | Out-Null
         Expand-ExtensionArchive $archive $candidate
