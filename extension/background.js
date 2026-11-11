@@ -1,4 +1,5 @@
 importScripts('auto-update.js');
+importScripts('run-alerts.js');
 // Drives a run: one company and one list (purchase, then sales) at a time.
 // State lives in chrome.storage.local so a run survives the service worker
 // going to sleep; each page asks for its task when it loads.
@@ -45,6 +46,7 @@ async function startRun(companies, opts, tabId) {
   if (!tasks.length) return { ok: false, error: 'Nic do zrobienia – zaznacz firmy i co pobrać.' };
   const run = { active: true, paused: false, tabId, month: opts.month, tasks, idx: 0, running: null, results: {}, log: [], started: Date.now() };
   await setState(run);
+  void chrome.action.setBadgeText({ text: '' }).catch(() => {});
   await log('Start: ' + companies.length + ' firm, miesiąc ' + opts.month + '.');
   await goToCurrent();
   return { ok: true };
@@ -58,6 +60,7 @@ async function goToCurrent() {
     run.finished = Date.now();
     await setState(run);
     await log('Gotowe. Pliki są w folderze Pobrane\\KSeF\\' + run.month + '.', 'ok');
+    await notifyKsefRun('complete', 'Zakończono pobieranie za ' + run.month + '. Pliki są w Pobrane\\KSeF\\' + run.month + '.');
     return;
   }
   const t = run.tasks[run.idx];
@@ -67,12 +70,14 @@ async function goToCurrent() {
   catch (e) { await pause('Karta z Symfonią została zamknięta. Otwórz Symfonię i kliknij „Wznów”.'); }
 }
 
-async function pause(reason) {
+async function pause(reason, detail) {
   const run = await getState();
   if (!run) return;
+  const wasPaused = run.paused;
   run.paused = true;
   await setState(run);
   await log(reason, 'warn');
+  if (!wasPaused) await notifyKsefRun('error', detail || reason);
 }
 
 // ---- downloads: give each file a clear name in Downloads\KSeF\<month>\ ----
@@ -119,7 +124,9 @@ chrome.downloads.onChanged.addListener((d) => {
 
 // ---- messages ----
 chrome.runtime.onMessage.addListener((msg, sender, reply) => {
+  if (msg.target === 'ksef-audio') return false;
   (async () => {
+    if (msg.type === 'testAlert') return reply(await notifyKsefRun('complete', 'To jest test powiadomienia i dźwięku wtyczki KSeF.', true));
     if (msg.type === 'checkUpdate') return reply(await checkKsefUpdate());
     if (msg.type === 'progress') {
       const run = await getState();
@@ -196,7 +203,7 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
       const who = (t.kind === 'purchase' ? 'Zakupy' : 'Sprzedaż') + ': ' + t.name;
       if (!r.ok) {
         await log(who + ' – błąd: ' + r.error, 'err');
-        await pause('Wstrzymano. Sprawdź stronę w Symfonii i kliknij „Wznów”, żeby spróbować jeszcze raz, albo „Pomiń”.');
+        await pause('Wstrzymano. Sprawdź stronę w Symfonii i kliknij „Wznów”, żeby spróbować jeszcze raz, albo „Pomiń”.', r.error);
         return reply(true);
       }
       if (r.empty) await log(who + ' – brak faktur w tym miesiącu.', 'muted');

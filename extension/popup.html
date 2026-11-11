@@ -84,8 +84,10 @@ input[type=month],select{font:inherit;padding:4px 6px;border:1px solid var(--lin
   </section>
   <p class="note">Wtyczka nie używa „Pobierz z KSeF” i nie zużywa operacji z pakietu. Pliki trafiają do Pobrane\KSeF\&lt;miesiąc&gt;.</p>
 <section><h2>Aktualizacje</h2><label><input type="checkbox" id="updateEnabled" checked> Automatyczne aktualizacje</label><p class="note" id="updateStatus"></p><button class="btn ghost" id="updateNow">Sprawdź teraz</button></section>
+<section><h2>Powiadomienia</h2><label><input type="checkbox" id="alertDesktop" checked> Powiadomienie systemowe</label><label><input type="checkbox" id="alertSound" checked> Sygnał dźwiękowy</label><p class="note" id="alertResult"></p><button class="btn ghost" id="alertTest">Test powiadomienia</button></section>
 </main>
 <script src="popup.js"></script>
 <script src="update-popup.js"></script>
+<script src="alerts-popup.js"></script>
 </body>
 </html>

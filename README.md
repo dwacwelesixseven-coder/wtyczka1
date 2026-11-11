@@ -84,3 +84,8 @@ Archiwa ZIP z PDF-ami są zapisywane w Pobrane/KSeF/RRRR-MM/Nazwa firmy/. Raport
 
 Pomocnik ustala jedno konkretne zatwierdzenie repozytorium i z niego pobiera zarówno manifest, jak i archiwum ZIP. Eliminuje to mieszanie wersji przy zmianie gałęzi main lub różnym czasie odświeżenia pamięci podręcznej GitHuba. Numer z main jest tylko wstępną wskazówką; publiczne API GitHuba jest wywoływane dopiero po wykryciu nowszej wersji. Zainstalowane wcześniej pomocniki wymagają ponownego uruchomienia ZAINSTALUJ.cmd z nowego pakietu. Dane i postęp są zachowane. Test: powershell -NoProfile -File tests/updater-snapshot.ps1.
 
+
+## Wersja 1.0.12: powiadomienia i dźwięk
+
+Po zakończeniu całego zadania oraz przy błędzie wstrzymującym pobieranie wtyczka wysyła powiadomienie systemowe i odtwarza krótki sygnał. Błąd i zakończenie mają różne dźwięki. Ręczne zatrzymanie zadania nie uruchamia alertu. Kliknięcie powiadomienia otwiera kartę Symfonii, jeśli nadal istnieje. W oknie wtyczki są osobne przełączniki dźwięku i powiadomienia oraz Test powiadomienia. Dźwięk działa przez ukryty dokument rozszerzenia, także przy zamkniętym oknie wtyczki. Nowa wersja dodaje uprawnienia notifications i offscreen; przeglądarka może wymagać zatwierdzenia nowych uprawnień lub ponownego włączenia rozszerzenia. Widoczność powiadomień i słyszalność dźwięku zależą również od ustawień Windows, przeglądarki i głośności. Testy: node tests/alerts.cjs.
+

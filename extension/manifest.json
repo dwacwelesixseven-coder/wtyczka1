@@ -1,14 +1,16 @@
 {
   "manifest_version": 3,
   "name": "KSeF – pobieranie miesięczne",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "description": "Dla każdej firmy w Symfonia KSeF Plus: zakres poprzedniego miesiąca, eksport listy XLS i pobranie faktur (ZIP).",
   "permissions": [
     "storage",
     "downloads",
     "tabs",
     "alarms",
-    "nativeMessaging"
+    "nativeMessaging",
+    "notifications",
+    "offscreen"
   ],
   "host_permissions": [
     "https://app.symfonia.pl/*"
