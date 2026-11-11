@@ -2,18 +2,35 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('nod
 const {findExportButton}=require('../extension/report-export.js');
 const button=(extra={})=>({textContent:'Eksportuj',getClientRects:()=>[1],getAttribute:()=>null,...extra});
 const dialog=(text,buttons,shown=true)=>({textContent:text,getClientRects:()=>shown?[1]:[],querySelectorAll:()=>buttons});
+const modalDoc=dialogs=>({querySelectorAll:selector=>selector==='button,[role="button"]'
+  ? dialogs.filter(element=>element.getClientRects().length).flatMap(element=>element.querySelectorAll()) : dialogs});
 (async()=>{
   const right=button({textContent:'  Eksportuj\n '});
   const hidden=dialog('Eksport raportu do pliku XLS',[button()],false);
   const unrelated=dialog('Eksport innych danych',[button()]);
   const report=dialog('Eksport raportu do pliku XLS Czy chcesz wykonać raport?',[button({textContent:'Anuluj'}),right]);
-  assert.equal(findExportButton({querySelectorAll:()=>[hidden,unrelated,report]}),right);
-  assert.equal(findExportButton({querySelectorAll:()=>[report,hidden,unrelated]}),right);
+  assert.equal(findExportButton(modalDoc([hidden,unrelated,report])),right);
+  assert.equal(findExportButton(modalDoc([report,hidden,unrelated])),right);
   console.log('PASS: visible XLS dialog found regardless of hidden/unrelated modal ordering');
-  assert.equal(findExportButton({querySelectorAll:()=>[unrelated]}),null);
-  assert.equal(findExportButton({querySelectorAll:()=>[dialog('Eksport raportu do pliku XLS',[button({disabled:true})])]}),null);
-  assert.equal(findExportButton({querySelectorAll:()=>[dialog('Eksport raportu do pliku XLS',[button({getClientRects:()=>[]})])]}),null);
+  assert.equal(findExportButton(modalDoc([unrelated])),null);
+  assert.equal(findExportButton(modalDoc([dialog('Eksport raportu do pliku XLS',[button({disabled:true})])])),null);
+  assert.equal(findExportButton(modalDoc([dialog('Eksport raportu do pliku XLS',[button({getClientRects:()=>[]})])])),null);
   console.log('PASS: unrelated, hidden or disabled Export buttons are rejected');
+  const unmarkedButton=button();
+  const unmarkedContainer={textContent:'Eksport raportu do pliku XLS Czy chcesz wykonać raport? Anuluj Eksportuj',parentElement:null};
+  unmarkedButton.parentElement={textContent:'Anuluj Eksportuj',parentElement:unmarkedContainer};
+  const unmarkedDoc={querySelectorAll:selector=>selector==='button,[role="button"]'?[unmarkedButton]:[]};
+  assert.equal(findExportButton(unmarkedDoc),unmarkedButton);
+  console.log('PASS: export button found in unmarked dialog with no modal selectors');
+  const contentsButton=button();
+  const contentsContainer=dialog('Eksport raportu do pliku XLS',[contentsButton],false);
+  contentsButton.parentElement=contentsContainer;
+  const contentsDoc={querySelectorAll:selector=>selector==='button,[role="button"]'?[contentsButton]:[contentsContainer]};
+  assert.equal(findExportButton(contentsDoc),contentsButton);
+  console.log('PASS: visible button found when modal wrapper has no rectangle (display:contents)');
+  unmarkedContainer.textContent='Eksport innych danych';
+  assert.equal(findExportButton(unmarkedDoc),null);
+  console.log('PASS: direct-button fallback still requires nearby XLS report title');
   let clicks=0,expected=0;
   const source=fs.readFileSync(require.resolve('../extension/content.js'),'utf8')
     .replace('  // The app is a single-page app:', '  globalThis.testExportXls = exportXls;\n  // The app is a single-page app:');

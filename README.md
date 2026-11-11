@@ -99,3 +99,8 @@ Przed wyborem daty wtyczka czeka na widoczne, aktywne pole i zakończenie blokad
 
 Wtyczka szuka widocznego okna Eksport raportu do pliku XLS/XLSX i aktywnego przycisku Eksportuj. Pomija inne i ukryte okna, rozpoznaje różne oznaczenia modalu oraz czeka na przycisk do 25 sekund. Jeśli właściwe okno już jest otwarte, wykorzystuje je bez ponownego otwierania menu. Testy: node tests/report-export.cjs.
 
+
+## Wersja 1.0.15: eksport bez oznaczenia modalu
+
+Wyszukiwanie przycisku Eksportuj nie zależy już wyłącznie od oznaczeń okna dialogowego. Wtyczka rozpoznaje również widoczny przycisk powiązany z pobliskim tytułem raportu XLS, w tym okna bez atrybutów modalu i kontenery display:contents. Przy niepowodzeniu dziennik podaje liczbę znalezionych, widocznych i aktywnych przycisków Eksportuj.
+

@@ -110,7 +110,7 @@
       item.click();
     }
     await chrome.runtime.sendMessage({ type: 'progress', taskId, text: 'Oczekiwanie na aktywny przycisk Eksportuj w oknie XLS…' });
-    if (!(await waitFor(exportButton, 25000))) throw new Error('Nie znalazłem aktywnego przycisku „Eksportuj” w widocznym oknie raportu XLS (25 s).');
+    if (!(await waitFor(exportButton, 25000))) throw new Error('Nie znalazłem aktywnego przycisku „Eksportuj” w oknie XLS (25 s). ' + KsefReport.diagnostics());
     await pace();
     // The modal can be re-rendered while the report is prepared.
     const ok = await waitFor(exportButton, 5000);
