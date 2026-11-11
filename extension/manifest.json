@@ -1,0 +1,49 @@
+{
+  "manifest_version": 3,
+  "name": "KSeF – pobieranie miesięczne",
+  "version": "1.0.3",
+  "description": "Dla każdej firmy w Symfonia KSeF Plus: zakres poprzedniego miesiąca, eksport listy XLS i pobranie faktur (ZIP).",
+  "permissions": [
+    "storage",
+    "downloads",
+    "tabs",
+    "alarms",
+    "nativeMessaging"
+  ],
+  "host_permissions": [
+    "https://app.symfonia.pl/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "KSeF – pobieranie miesięczne"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://app.symfonia.pl/earchive*"
+      ],
+      "js": [
+        "hook.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://app.symfonia.pl/earchive*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "icons": {
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtQErsd+vtMYCp+NFDkJjwM7zhxcSqqLYf5nFF3yBkEqTvchpzOX9+4DIGC/gyU7b26XjsQtEpMpdWvlhgH0UR+jIvRvM+86z5uOlDv6hnyRZdzENqDTiFU8ksEOeM29SEi6P6ERJp5p2Ye3AyGaMSvHMBBoxJjHJQsOqHZ0UJGUnmk47j4Ru3DQMoMYjQiiOixFpkOl0MY6LcmLGBImb2Rf9bxk9FEdy5YdrgLYF65dXuYph2IG3DQKutsMQP6kfbkTxgpeXLy1miSMvZvY4tuboLyru9pu77mX1NH8Z3YZdhkyRnW5d0fhNHgP3saPs34pD3fjRacJfjGq0kr+qzQIDAQAB"
+}

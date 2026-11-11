@@ -1,0 +1,37 @@
+KSeF – pobieranie miesięczne (wtyczka do Chrome / Edge)
+
+INSTALACJA (raz)
+1. Rozpakuj ten ZIP do stałego folderu, np. D:\Wtyczki\ksef-pobieranie.
+   Nie usuwaj go potem – przeglądarka wczytuje wtyczkę z tego folderu.
+2. Chrome: wpisz w pasku adresu chrome://extensions
+   Edge:   wpisz edge://extensions
+3. Włącz „Tryb dewelopera” (przełącznik w prawym górnym rogu w Chrome,
+   w lewym menu w Edge).
+4. Kliknij „Załaduj rozpakowane” i wskaż rozpakowany folder.
+5. Kliknij ikonę puzzla obok paska adresu i przypnij „KSeF – pobieranie miesięczne”.
+6. Ustawienia przeglądarki → Pobrane pliki: wyłącz „Pytaj, gdzie zapisać każdy plik”,
+   inaczej przeglądarka zapyta o każdy plik osobno.
+
+UŻYCIE (co miesiąc)
+1. Zaloguj się do Symfonii i otwórz KSeF (Lista firm).
+2. Kliknij ikonę wtyczki. Za pierwszym razem lista firm wczyta się sama.
+   Jeśli jest pusta, odśwież stronę Symfonii (F5) i otwórz wtyczkę ponownie.
+3. Sprawdź miesiąc (domyślnie poprzedni) i zaznaczone firmy. Wybór firm
+   jest zapamiętywany na następny miesiąc.
+4. Kliknij „Rozpocznij” i nie używaj tej karty, dopóki wtyczka pracuje.
+   Możesz w tym czasie pracować w innych kartach i programach.
+5. Pliki trafiają do: Pobrane\KSeF\RRRR-MM\
+   np. „Przykladowa Firma (0000000000) - Raport_Faktury_Zakupowe.xlsx”
+       „Przykladowa Firma (0000000000) - Faktury_Zakupowe_PDF.zip”
+   Gdy lista ma kilka stron, każda strona to osobny ZIP (_str2, _str3…).
+6. Otwórz ten folder, zaznacz wszystko (Ctrl+A) i przeciągnij do Formatera
+   raportów KSeF.
+
+GDY COŚ PÓJDZIE NIE TAK
+Wtyczka zatrzymuje się i opisuje problem. Popraw sytuację w Symfonii
+(np. zaloguj się ponownie) i kliknij „Wznów” albo „Pomiń tę firmę”.
+
+CZEGO WTYCZKA NIE ROBI
+– nie używa przycisku „Pobierz z KSeF” i nie zużywa operacji z pakietu,
+– nie zmienia niczego w Symfonii, nie zna i nie zapisuje Twojego hasła,
+– działa tylko na app.symfonia.pl i tylko po kliknięciu „Rozpocznij”.

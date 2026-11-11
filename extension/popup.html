@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>KSeF – pobieranie miesięczne</title>
+<style>
+:root{--bg:#f4f6f8;--surface:#fff;--ink:#16212b;--muted:#5b6876;--line:#d5dbe2;--accent:#0b6b5d;--accent-ink:#fff;--soft:#e2f1ee;--warn:#9a5b00;--err:#a3261d;
+  --sans:"Segoe UI",system-ui,-apple-system,sans-serif}
+@media (prefers-color-scheme: dark){:root{--bg:#12181d;--surface:#1a2229;--ink:#e6ebef;--muted:#97a4b0;--line:#313c46;--accent:#4cc2ae;--accent-ink:#06211c;--soft:#17312d;--warn:#e0a84a;--err:#f08a80;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;width:400px;background:var(--bg);color:var(--ink);font:13.5px/1.45 var(--sans)}
+header{padding:14px 16px 10px;border-bottom:1px solid var(--line);background:var(--surface)}
+h1{font-size:15px;margin:0;font-weight:600}
+.sub{color:var(--muted);font-size:12.5px;margin-top:2px}
+main{padding:12px 16px 16px;display:flex;flex-direction:column;gap:12px}
+h2{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 6px;font-weight:600}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+label{display:flex;gap:6px;align-items:center;cursor:pointer}
+input[type=checkbox],input[type=radio]{accent-color:var(--accent);margin:0}
+input[type=month],select{font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)}
+#search{width:100%;margin-top:6px;font:inherit;padding:6px 9px;border:1px solid var(--line);border-radius:7px;background:var(--surface);color:var(--ink)}
+.list label[hidden]{display:none}
+.list{max-height:210px;overflow:auto;background:var(--surface);border:1px solid var(--line);border-radius:8px}
+.list label{padding:6px 10px;border-top:1px solid var(--line);align-items:flex-start}
+.list label:first-child{border-top:0}
+.nip{color:var(--muted);font-variant-numeric:tabular-nums;font-size:12px;white-space:nowrap}
+.cname{flex:1;min-width:0}
+.mini{font-size:12px;color:var(--accent);background:none;border:0;padding:0;cursor:pointer;font:inherit;font-size:12px}
+.btn{font:inherit;font-weight:600;border-radius:7px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);padding:7px 14px;cursor:pointer}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn:disabled{opacity:.5;cursor:default}
+.note{color:var(--muted);font-size:12px;margin:0}
+.prog{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px}
+.bar{height:6px;background:var(--line);border-radius:3px;overflow:hidden;margin:6px 0}
+.bar i{display:block;height:100%;background:var(--accent);width:0}
+.log{max-height:170px;overflow:auto;font-size:12px;margin-top:6px;display:flex;flex-direction:column;gap:2px}
+.log .ok{color:var(--accent)} .log .warn{color:var(--warn)} .log .err{color:var(--err)} .log .muted{color:var(--muted)}
+.empty{padding:12px;color:var(--muted)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+</head>
+<body>
+<header>
+  <h1>KSeF – pobieranie miesięczne</h1>
+  <div class="sub">Raport XLS i faktury dla każdej firmy, po kolei.</div>
+</header>
+<main>
+  <section id="setup">
+    <h2>Miesiąc</h2>
+    <div class="row"><input type="month" id="month"><span class="note" id="monthNote"></span></div>
+  </section>
+  <section id="setup2">
+    <h2>Co pobrać</h2>
+    <div class="row">
+      <label><input type="checkbox" id="purchase" checked>zakupy</label>
+      <label><input type="checkbox" id="sales" checked>sprzedaż</label>
+    </div>
+    <div class="row" style="margin-top:6px">
+      <label><input type="checkbox" id="report" checked>raport XLS</label>
+      <label><input type="checkbox" id="invoices" checked>faktury jako</label>
+      <select id="format"><option value="PDF">PDF</option><option value="XML">XML</option><option value="both">PDF i XML</option></select>
+    </div>
+  </section>
+  <section id="setup3">
+    <div class="row" style="justify-content:space-between"><h2 style="margin:0">Firmy</h2>
+      <span><button class="mini" id="all">zaznacz wszystkie</button> · <button class="mini" id="none">odznacz</button></span></div>
+    <input type="search" id="search" placeholder="Szukaj firmy po nazwie lub NIP" aria-label="Szukaj firmy" autocomplete="off">
+    <div class="list" id="list" style="margin-top:6px"><div class="empty">Otwórz Symfonię KSeF (Lista firm), a lista firm pojawi się tutaj.</div></div>
+  </section>
+  <div class="row" id="actions">
+    <button class="btn" id="start">Rozpocznij</button>
+    <span class="note" id="hint"></span>
+  </div>
+  <section class="prog" id="prog" hidden>
+    <div class="row" style="justify-content:space-between"><strong id="progTitle">Pobieranie</strong><span class="note" id="progCount"></span></div>
+    <div class="bar"><i id="bar"></i></div>
+    <div class="row" id="runBtns">
+      <button class="btn ghost" id="stop">Zatrzymaj</button>
+      <button class="btn" id="resume" hidden>Wznów</button>
+      <button class="btn ghost" id="skip" hidden>Pomiń tę firmę</button>
+      <button class="btn ghost" id="newRun" hidden>Nowe pobieranie</button>
+    </div>
+    <div class="log" id="log"></div>
+  </section>
+  <p class="note">Wtyczka nie używa „Pobierz z KSeF” i nie zużywa operacji z pakietu. Pliki trafiają do Pobrane\KSeF\&lt;miesiąc&gt;.</p>
+<section><h2>Aktualizacje</h2><label><input type="checkbox" id="updateEnabled" checked> Automatyczne aktualizacje</label><p class="note" id="updateStatus"></p><button class="btn ghost" id="updateNow">Sprawdź teraz</button></section>
+</main>
+<script src="popup.js"></script>
+<script src="update-popup.js"></script>
+</body>
+</html>
