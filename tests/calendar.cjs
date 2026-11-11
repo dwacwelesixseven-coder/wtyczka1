@@ -57,7 +57,7 @@ function calendarFixture(initial, final, allowedClicks = [final]) {
   console.log('PASS: unchanged 01-10 start is skipped and 11-11 end is corrected to 31-10');
   const invalid=calendarFixture(new Date(2026,9,1),parseDate('01-10-2026'),[parseDate('01-10-2026'),parseDate('02-10-2026')]);
   invalid.field.value='01-10-2026';
-  invalid.field.getAttribute=()=> 'true';
+  invalid.field.getAttribute=name=>name==='aria-invalid'?'true':null;
   await selectDate(invalid.field,'01-10-2026',invalid);
   assert.equal(invalid.field.value,'01-10-2026');
   assert.equal(invalid.clicks.filter(click=>click==='day').length,2);
@@ -76,6 +76,32 @@ function calendarFixture(initial, final, allowedClicks = [final]) {
   assert.equal(replaced.field.value,'01-10-2026');
   assert.equal(oldField.value,'11-11-2026');
   console.log('PASS: validation re-reads field after React replaces its DOM node');
+  const loading=calendarFixture(new Date(2026,10,11),parseDate('01-10-2026'));
+  loading.field.disabled=true;
+  let loadingPolls=0;
+  loading.sleep=async()=>{loadingPolls++;if(loadingPolls>=3)loading.field.disabled=false;};
+  await selectDate(loading.field,'01-10-2026',loading);
+  assert.ok(loadingPolls>=3);assert.equal(loading.field.value,'01-10-2026');
+  console.log('PASS: calendar click waits until a loading field becomes enabled');
+
+  const retry=calendarFixture(new Date(2026,10,11),parseDate('01-10-2026'));
+  const retryIcon=retry.field.closest().querySelector('[data-icon="calendarToday"]');
+  const realTrigger=retryIcon.closest();
+  let attempts=0;const reported=[];
+  retryIcon.closest=()=>({click(){attempts++;if(attempts>1)realTrigger.click();}});
+  retry.onRetry=async attempt=>reported.push(attempt);
+  await selectDate(retry.field,'01-10-2026',retry);
+  assert.equal(attempts,2);assert.deepEqual(reported,[2]);
+  console.log('PASS: ignored first opening is retried and reported before selecting date');
+
+  const unavailable=calendarFixture(new Date(2026,10,11),parseDate('01-10-2026'));
+  const unavailableIcon=unavailable.field.closest().querySelector('[data-icon="calendarToday"]');
+  let failedClicks=0;
+  unavailableIcon.closest=()=>({click(){failedClicks++;}});
+  unavailable.fieldName='do';
+  await assert.rejects(selectDate(unavailable.field,'01-10-2026',unavailable),/„do”.*3 próbach/);
+  assert.equal(failedClicks,3);
+  console.log('PASS: permanently unavailable calendar stops after three attempts with field-specific error');
   const field=value=>({value,getAttribute:()=>null,closest:()=>({querySelector:()=>null})});
   const from=field('01-10-2026'),to=field('31-10-2026');
   const event={path:'/company/a/purchase',from:'2026-10-01T00:00:00',to:'2026-10-31T00:00:00',count:8};

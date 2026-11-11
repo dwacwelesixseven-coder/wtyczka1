@@ -89,3 +89,8 @@ Pomocnik ustala jedno konkretne zatwierdzenie repozytorium i z niego pobiera zar
 
 Po zakończeniu całego zadania oraz przy błędzie wstrzymującym pobieranie wtyczka wysyła powiadomienie systemowe i odtwarza krótki sygnał. Błąd i zakończenie mają różne dźwięki. Ręczne zatrzymanie zadania nie uruchamia alertu. Kliknięcie powiadomienia otwiera kartę Symfonii, jeśli nadal istnieje. W oknie wtyczki są osobne przełączniki dźwięku i powiadomienia oraz Test powiadomienia. Dźwięk działa przez ukryty dokument rozszerzenia, także przy zamkniętym oknie wtyczki. Nowa wersja dodaje uprawnienia notifications i offscreen; przeglądarka może wymagać zatwierdzenia nowych uprawnień lub ponownego włączenia rozszerzenia. Widoczność powiadomień i słyszalność dźwięku zależą również od ustawień Windows, przeglądarki i głośności. Testy: node tests/alerts.cjs.
 
+
+## Wersja 1.0.13: ponawianie otwarcia kalendarza
+
+Przed wyborem daty wtyczka czeka na widoczne, aktywne pole i zakończenie blokady interakcji podczas ładowania strony (do 30 sekund). Przy nieudanym otwarciu kalendarza ponownie wyszukuje bieżące pole i ikonę, wykonując maksymalnie trzy próby. Dziennik pokazuje próby oraz nazwę pola od/do. Testy obejmują opóźnione odblokowanie pola i zignorowane pierwsze kliknięcie.
+

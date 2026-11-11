@@ -30,12 +30,34 @@
   async function selectDate(field, value, options = {}) {
     const doc = options.document || document;
     const sleep = options.sleep || pause;
+    const styleOf = options.getComputedStyle || (typeof getComputedStyle === 'function' ? getComputedStyle : () => null);
     const getField = typeof field === 'function' ? field : () => field;
-    const currentField = getField();
     const target = parseDate(value);
     if (!target) throw new Error('Nieprawidłowa data: ' + value);
-    if (!currentField) throw new Error('Nie znalazłem aktualnego pola daty wystawienia.');
-    const wrapper = currentField.closest('[data-test-element="input-date"]') || currentField.closest('[data-testid]');
+    async function waitFor(fn, attempts = 40) {
+      for (let attempt = 0; attempt < attempts; attempt++) {
+        const result = fn();
+        if (result) return result;
+        await sleep(100);
+      }
+      return null;
+    }
+    const wrapperOf = input => input?.closest('[data-test-element="input-date"]') || input?.closest('[data-testid]');
+    const readyField = () => {
+      const input = getField();
+      if (!input || input.isConnected === false || input.disabled || input.readOnly || input.getAttribute('aria-disabled') === 'true') return null;
+      if (input.getClientRects && !input.getClientRects().length) return null;
+      let parent = wrapperOf(input);
+      for (let depth = 0; parent && depth < 6; depth++, parent = parent.parentElement) {
+        const style = styleOf(parent);
+        if (style?.pointerEvents === 'none' || style?.display === 'none' || style?.visibility === 'hidden' ||
+            parent.getAttribute?.('aria-busy') === 'true') return null;
+      }
+      return input;
+    };
+    const currentField = await waitFor(readyField, 300);
+    if (!currentField) throw new Error('Pole daty „' + (options.fieldName || value) + '” jest nadal nieaktywne lub strona się ładuje (30 s).');
+    const wrapper = wrapperOf(currentField);
     if (currentField.value === value) {
       const invalid = currentField.getAttribute('aria-invalid') === 'true' || wrapper?.querySelector('[class*="color-error"]');
       // CalendarCore emits onChange only when its selected day changes.
@@ -50,21 +72,29 @@
       await selectDate(getField, value, options);
       return;
     }
-    const icon = wrapper?.querySelector('[data-icon="calendarToday"]');
-    if (!icon) throw new Error('Nie znalazłem ikony kalendarza daty wystawienia.');
-    icon.closest('[data-test-element="icon"]').click();
     const activeCalendar = () => Array.from(doc.querySelectorAll('[data-test-element="input-date-calendar"]'))
       .find(element => element.getClientRects().length > 0);
-    async function waitFor(fn) {
-      for (let attempt = 0; attempt < 40; attempt++) {
-        const result = fn();
-        if (result) return result;
-        await sleep(100);
+    let calendar = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      // React can replace the field between readiness and click. Re-read its
+      // icon on every attempt instead of clicking a detached component.
+      const liveField = await waitFor(readyField, 100);
+      const icon = wrapperOf(liveField)?.querySelector('[data-icon="calendarToday"]');
+      const trigger = icon?.closest('[data-test-element="icon"]');
+      if (trigger) {
+        liveField.scrollIntoView?.({ block: 'center' });
+        trigger.click();
+        calendar = await waitFor(activeCalendar);
+        if (calendar) break;
       }
-      return null;
+      if (attempt < 3) {
+        await options.onRetry?.(attempt + 1);
+        await sleep(500);
+        calendar = activeCalendar();
+        if (calendar) break;
+      }
     }
-    let calendar = await waitFor(activeCalendar);
-    if (!calendar) throw new Error('Nie otworzył się kalendarz daty wystawienia.');
+    if (!calendar) throw new Error('Nie otworzył się kalendarz daty „' + (options.fieldName || value) + '” po 3 próbach.');
     const desiredMonth = target.getFullYear() * 12 + target.getMonth();
     for (let step = 0; step < 240; step++) {
       calendar = activeCalendar();

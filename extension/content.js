@@ -67,7 +67,7 @@
     return chrome.runtime.sendMessage({ type: 'expectDownload', name, timeout: timeout || 120000 });
   }
 
-  async function setRange(from, to) {
+  async function setRange(from, to, taskId) {
     const fromIn = () => qs('[data-testid$="DateOfIssue-DateFrom"] input');
     const toIn = () => qs('[data-testid$="DateOfIssue-DateTo"] input');
     if (!(await waitFor(() => fromIn() && toIn(), 30000))) throw new Error('Nie znalazłem pól z datą wystawienia.');
@@ -76,13 +76,16 @@
       invoiceEvents, location.pathname, byText('button', 'Zastosuj'));
     const existing = confirmed();
     if (existing) return existing;
+    const calendarOptions = fieldName => ({ fieldName, onRetry: attempt => chrome.runtime.sendMessage({
+      type: 'progress', taskId, text: 'Ponowne otwieranie kalendarza „' + fieldName + '” (' + attempt + '/3)…'
+    }) });
     // When the new start is after the current end, set the end first (keeps the range valid).
     if (iso(from) > iso(toIn()?.value || '0000')) {
-      await KsefCalendar.selectDate(toIn, to);
-      await KsefCalendar.selectDate(fromIn, from);
+      await KsefCalendar.selectDate(toIn, to, calendarOptions('do'));
+      await KsefCalendar.selectDate(fromIn, from, calendarOptions('od'));
     } else {
-      await KsefCalendar.selectDate(fromIn, from);
-      await KsefCalendar.selectDate(toIn, to);
+      await KsefCalendar.selectDate(fromIn, from, calendarOptions('od'));
+      await KsefCalendar.selectDate(toIn, to, calendarOptions('do'));
     }
     await pace();
     const apply = byText('button', 'Zastosuj');
@@ -139,7 +142,7 @@
   async function runTask(task) {
     const kindLabel = task.kind === 'purchase' ? 'Zakupowe' : 'Sprzedazowe';
     const result = { reportOk: false, invoices: 0, zips: 0, empty: false };
-    const ev = await setRange(task.from, task.to);
+    const ev = await setRange(task.from, task.to, task.id);
     await pace();
     await waitFor(() => emptyList() || qs('table[data-testid^="invoices-table-"] tbody tr input[type=checkbox]'), 15000);
     if ((ev && ev.count === 0) || emptyList()) {
