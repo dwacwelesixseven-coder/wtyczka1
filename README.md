@@ -74,3 +74,8 @@ Prawidłowa data już ustawiona w polu jest pomijana. Kalendarz Symfonii nie zg�
 
 Przed pobieraniem faktur w PDF wtyczka ustawia Pokaż na stronie na 50 i czeka na odświeżenie listy z serwera. Dla zestawu PDF + XML ustawienie 50 pozostaje wspólne. Pobieranie samego XML nie zmienia rozmiaru strony. Gdy lista ma więcej niż 50 pozycji, kolejne strony nadal są pobierane oddzielnie. Testy: node tests/page-size.cjs.
 
+
+## Wersja 1.0.10: foldery firm dla archiwów PDF
+
+Archiwa ZIP z PDF-ami są zapisywane w Pobrane/KSeF/RRRR-MM/Nazwa firmy/. Raporty XLSX pozostają bezpośrednio w Pobrane/KSeF/RRRR-MM/, z nazwą firmy w nazwie pliku. Nazwy folderów są oczyszczane z niedozwolonych znaków tak jak nazwy plików. ZIP-y z XML pozostają w dotychczasowym miejscu. Zmiana dotyczy nowych pobrań; nie przenosi wcześniejszych plików.
+

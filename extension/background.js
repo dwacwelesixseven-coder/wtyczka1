@@ -87,7 +87,10 @@ function fileNameFor(label, task, run, original) {
     return base + 'Raport_Faktury_' + kind + ext;
   }
   const [, fmt, page] = label.split('|');
-  return base + 'Faktury_' + kind + '_' + fmt + (page !== '1' ? '_str' + page : '') + '.zip';
+  const invoiceBase = fmt === 'PDF'
+    ? 'KSeF/' + run.month + '/' + safe(task.name) + '/' + safe(task.name) + ' (' + task.nip + ') - '
+    : base;
+  return invoiceBase + 'Faktury_' + kind + '_' + fmt + (page !== '1' ? '_str' + page : '') + '.zip';
 }
 
 const isSymfonia = (item) => /^blob:https:\/\/app\.symfonia\.pl\//.test(item.url || '') || /app\.symfonia\.pl/.test(item.referrer || '');

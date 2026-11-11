@@ -35,3 +35,9 @@ CZEGO WTYCZKA NIE ROBI
 – nie używa przycisku „Pobierz z KSeF” i nie zużywa operacji z pakietu,
 – nie zmienia niczego w Symfonii, nie zna i nie zapisuje Twojego hasła,
 – działa tylko na app.symfonia.pl i tylko po kliknięciu „Rozpocznij”.
+
+UKLAD FOLDEROW OD WERSJI 1.0.10
+Archiwa ZIP z PDF: Pobrane\KSeF\RRRR-MM\Nazwa firmy\
+Raporty XLSX: Pobrane\KSeF\RRRR-MM\ (poza folderami firm).
+Archiwa XML: bez zmian, bezposrednio w folderze miesiaca.
+
