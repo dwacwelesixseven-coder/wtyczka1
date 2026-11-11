@@ -68,16 +68,16 @@
   }
 
   async function setRange(from, to) {
-    const fromIn = await waitFor(() => qs('[data-testid$="DateOfIssue-DateFrom"] input'), 30000);
-    const toIn = qs('[data-testid$="DateOfIssue-DateTo"] input');
-    if (!fromIn || !toIn) throw new Error('Nie znalazłem pól z datą wystawienia.');
+    const fromIn = () => qs('[data-testid$="DateOfIssue-DateFrom"] input');
+    const toIn = () => qs('[data-testid$="DateOfIssue-DateTo"] input');
+    if (!(await waitFor(() => fromIn() && toIn(), 30000))) throw new Error('Nie znalazłem pól z datą wystawienia.');
     await sleep(1500); // let the default list load first
-    const confirmed = () => KsefCalendar.rangeConfirmed(fromIn, toIn, from, to,
+    const confirmed = () => KsefCalendar.rangeConfirmed(fromIn(), toIn(), from, to,
       invoiceEvents, location.pathname, byText('button', 'Zastosuj'));
     const existing = confirmed();
     if (existing) return existing;
     // When the new start is after the current end, set the end first (keeps the range valid).
-    if (iso(from) > iso(toIn.value || '0000')) {
+    if (iso(from) > iso(toIn()?.value || '0000')) {
       await KsefCalendar.selectDate(toIn, to);
       await KsefCalendar.selectDate(fromIn, from);
     } else {

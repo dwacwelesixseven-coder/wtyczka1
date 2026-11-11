@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const {selectDate, parseDate, normalizeDate, rangeConfirmed} = require('../extension/calendar-select.js');
 
-function calendarFixture(initial, final) {
+function calendarFixture(initial, final, allowedClicks = [final]) {
   let month = initial.getFullYear() * 12 + initial.getMonth();
   let open = false;
   const clicks = [];
@@ -12,9 +12,11 @@ function calendarFixture(initial, final) {
     return Array.from({length:42},(_,i)=>{
       const date = new Date(first.getFullYear(),first.getMonth(),i-mondayOffset+1);
       return {getAttribute:()=>date.toLocaleDateString(),click(){
-        assert.equal(date.getTime(),final.getTime());
+        assert.ok(allowedClicks.some(allowed => allowed.getTime() === date.getTime()), 'only intended dates may be clicked');
         assert.equal(date.getMonth(),month%12,'select from displayed month');
-        clicks.push('day'); field.value = [date.getDate(),date.getMonth()+1,date.getFullYear()].map((x,i)=>i<2?String(x).padStart(2,'0'):x).join('-');open=false;
+        const next = [date.getDate(),date.getMonth()+1,date.getFullYear()].map((x,i)=>i<2?String(x).padStart(2,'0'):x).join('-');
+        if (field.value === next) { clicks.push('ignored-same-day'); return; }
+        clicks.push('day'); field.value = next;open=false;
       }};
     });
   }
@@ -44,6 +46,36 @@ function calendarFixture(initial, final) {
     assert.equal(fixture.clicks.at(-1),'day');
     console.log('PASS: calendar selection',initial.toLocaleDateString(),'->',value);
   }
+  const unchanged=calendarFixture(new Date(2026,9,1),parseDate('01-10-2026'));
+  unchanged.field.value='01-10-2026';
+  await selectDate(unchanged.field,'01-10-2026',unchanged);
+  assert.deepEqual(unchanged.clicks,[],'already correct from-date must not open or click its calendar');
+  const end=calendarFixture(new Date(2026,10,11),parseDate('31-10-2026'));
+  end.field.value='11-11-2026';
+  await selectDate(end.field,'31-10-2026',end);
+  assert.equal(end.field.value,'31-10-2026');
+  console.log('PASS: unchanged 01-10 start is skipped and 11-11 end is corrected to 31-10');
+  const invalid=calendarFixture(new Date(2026,9,1),parseDate('01-10-2026'),[parseDate('01-10-2026'),parseDate('02-10-2026')]);
+  invalid.field.value='01-10-2026';
+  invalid.field.getAttribute=()=> 'true';
+  await selectDate(invalid.field,'01-10-2026',invalid);
+  assert.equal(invalid.field.value,'01-10-2026');
+  assert.equal(invalid.clicks.filter(click=>click==='day').length,2);
+  console.log('PASS: matching but invalid masked field is repaired through calendar change events');
+
+  const replaced=calendarFixture(new Date(2026,10,11),parseDate('01-10-2026'));
+  const oldField=replaced.field;
+  oldField.value='11-11-2026';
+  const originalQuery=replaced.document.querySelectorAll;
+  replaced.document.querySelectorAll=selector=>originalQuery(selector).map(calendar=>({
+    ...calendar,querySelectorAll:selector=>calendar.querySelectorAll(selector).map(day=>({
+      ...day,click(){day.click();replaced.field={...oldField};oldField.value='11-11-2026';}
+    }))
+  }));
+  await selectDate(()=>replaced.field,'01-10-2026',replaced);
+  assert.equal(replaced.field.value,'01-10-2026');
+  assert.equal(oldField.value,'11-11-2026');
+  console.log('PASS: validation re-reads field after React replaces its DOM node');
   const field=value=>({value,getAttribute:()=>null,closest:()=>({querySelector:()=>null})});
   const from=field('01-10-2026'),to=field('31-10-2026');
   const event={path:'/company/a/purchase',from:'2026-10-01T00:00:00',to:'2026-10-31T00:00:00',count:8};

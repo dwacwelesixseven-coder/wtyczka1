@@ -64,3 +64,8 @@ Akcja pobierania jest rozpoznawana po identyfikatorze downloadInvoiceMultipleAct
 
 W nowym pasku akcji Symfonii identyfikator pobierania znajduje się na kontenerze div. Wtyczka klika teraz umieszczony w nim przycisk, który faktycznie otwiera menu. Test obejmuje kontener bez obsługi kliknięcia oraz przycisk wewnętrzny, także wyłączony.
 
+
+## Poprawka 1.0.8: niezależna korekta dat od/do
+
+Prawidłowa data już ustawiona w polu jest pomijana. Kalendarz Symfonii nie zgłasza zmiany po kliknięciu już wybranego dnia, dlatego wcześniejsza wersja mogła zatrzymać się na prawidłowej dacie od przed poprawieniem daty do. Po zmianie dat pola są odczytywane ponownie z bieżącej strony.
+

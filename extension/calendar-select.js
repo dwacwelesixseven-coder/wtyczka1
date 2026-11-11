@@ -30,9 +30,26 @@
   async function selectDate(field, value, options = {}) {
     const doc = options.document || document;
     const sleep = options.sleep || pause;
+    const getField = typeof field === 'function' ? field : () => field;
+    const currentField = getField();
     const target = parseDate(value);
     if (!target) throw new Error('Nieprawidłowa data: ' + value);
-    const wrapper = field.closest('[data-test-element="input-date"]') || field.closest('[data-testid]');
+    if (!currentField) throw new Error('Nie znalazłem aktualnego pola daty wystawienia.');
+    const wrapper = currentField.closest('[data-test-element="input-date"]') || currentField.closest('[data-testid]');
+    if (currentField.value === value) {
+      const invalid = currentField.getAttribute('aria-invalid') === 'true' || wrapper?.querySelector('[class*="color-error"]');
+      // CalendarCore emits onChange only when its selected day changes.
+      // Re-selecting the same valid date leaves the popup open indefinitely.
+      if (!invalid) return;
+      // Repair a masked field that displays the target but has invalid state.
+      // A temporary adjacent date triggers the actual calendar change handler.
+      const adjacent = new Date(target.getFullYear(), target.getMonth(), target.getDate() === 1 ? 2 : target.getDate() - 1);
+      const temporary = [adjacent.getDate(), adjacent.getMonth() + 1, adjacent.getFullYear()]
+        .map((part, index) => index < 2 ? String(part).padStart(2, '0') : part).join('-');
+      await selectDate(getField, temporary, options);
+      await selectDate(getField, value, options);
+      return;
+    }
     const icon = wrapper?.querySelector('[data-icon="calendarToday"]');
     if (!icon) throw new Error('Nie znalazłem ikony kalendarza daty wystawienia.');
     icon.closest('[data-test-element="icon"]').click();
@@ -58,7 +75,7 @@
           .find(element => element.getAttribute('data-date') === target.toLocaleDateString());
         if (!day) throw new Error('Nie znalazłem dnia ' + value + ' w kalendarzu.');
         day.click();
-        if (!(await waitFor(() => !activeCalendar() && field.value === value))) {
+        if (!(await waitFor(() => !activeCalendar() && getField()?.value === value))) {
           throw new Error('Symfonia nie zatwierdziła daty ' + value + ' wybranej z kalendarza.');
         }
         return;
@@ -74,6 +91,7 @@
     throw new Error('Wybrana data jest zbyt daleko od bieżącego miesiąca kalendarza.');
   }
   function rangeConfirmed(fromField, toField, from, to, events, path, apply) {
+    if (!fromField || !toField) return null;
     if (fromField.value !== from || toField.value !== to || (apply && !apply.disabled)) return null;
     if ([fromField, toField].some(field => field.getAttribute('aria-invalid') === 'true' ||
       field.closest('[data-test-element="input-date"]')?.querySelector('[class*="color-error"]'))) return null;
