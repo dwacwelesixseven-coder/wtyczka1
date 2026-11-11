@@ -104,3 +104,8 @@ Wtyczka szuka widocznego okna Eksport raportu do pliku XLS/XLSX i aktywnego przy
 
 Wyszukiwanie przycisku Eksportuj nie zależy już wyłącznie od oznaczeń okna dialogowego. Wtyczka rozpoznaje również widoczny przycisk powiązany z pobliskim tytułem raportu XLS, w tym okna bez atrybutów modalu i kontenery display:contents. Przy niepowodzeniu dziennik podaje liczbę znalezionych, widocznych i aktywnych przycisków Eksportuj.
 
+
+## Wersja 1.0.16: naprawa warunku tytułu eksportu
+
+Naprawiono błędną granicę słowa w rozpoznawaniu tytułu XLS. Odczyt textContent łączy tekst nagłówka i opisu bez separatora, np. XLSCzy chcesz, przez co wersje 1.0.14 i 1.0.15 mogły odrzucać widoczny i aktywny przycisk Eksportuj. Test obejmuje dokładnie taki połączony tekst oraz wywołanie całego kroku eksportu.
+

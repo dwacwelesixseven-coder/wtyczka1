@@ -11,7 +11,10 @@
     const normalize = value => (value || '').replace(/[\u200b-\u200f\ufeff\u00ad]/g, '').replace(/\s+/g, ' ').trim();
     const isExport = element => visible(element) && !element.disabled && element.getAttribute('aria-disabled') !== 'true' &&
       normalize(element.innerText || element.textContent) === 'Eksportuj';
-    const hasTitle = element => /Eksport raportu do pliku\s*XLSX?\b/i.test(normalize(element.textContent));
+    // textContent joins adjacent block elements without a separator:
+    // "...pliku XLS" + "Czy chcesz..." becomes "...pliku XLSCzy chcesz...".
+    // Requiring a word boundary after XLS rejects the actual export dialog.
+    const hasTitle = element => /Eksport\s+raportu\s+do\s+pliku\s*XLSX?/i.test(normalize(element.innerText || element.textContent));
     const dialogs = Array.from(doc.querySelectorAll('[data-test-element="modal"],[role="dialog"],[data-testid="modal"]'));
     for (const dialog of dialogs.reverse()) {
       if (!visible(dialog) || !hasTitle(dialog)) continue;
