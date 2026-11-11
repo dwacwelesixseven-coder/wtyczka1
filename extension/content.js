@@ -160,7 +160,11 @@
       return result;
     }
     if (task.report) {
-      await exportXls('report', task.id);
+      if (task.reportDownloaded) {
+        await chrome.runtime.sendMessage({ type: 'progress', taskId: task.id, text: 'Raport XLS już pobrany — pomijam ponowny eksport.' });
+      } else {
+        await exportXls('report', task.id);
+      }
       result.reportOk = true;
       await pace();
     }

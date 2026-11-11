@@ -44,6 +44,9 @@ function buildTasks(companies, opts) {
 async function startRun(companies, opts, tabId) {
   const tasks = buildTasks(companies, opts);
   if (!tasks.length) return { ok: false, error: 'Nic do zrobienia – zaznacz firmy i co pobrać.' };
+  const stored = await chrome.storage.local.get(null);
+  const oldReports = Object.keys(stored).filter(key => key.startsWith('ksef-report:'));
+  if (oldReports.length) await chrome.storage.local.remove(oldReports);
   const run = { active: true, paused: false, tabId, month: opts.month, tasks, idx: 0, running: null, results: {}, log: [], started: Date.now() };
   await setState(run);
   void chrome.action.setBadgeText({ text: '' }).catch(() => {});
@@ -98,6 +101,41 @@ function fileNameFor(label, task, run, original) {
   return invoiceBase + 'Faktury_' + kind + '_' + fmt + (page !== '1' ? '_str' + page : '') + '.zip';
 }
 
+function reportCheckpointKey(run, task) {
+  return 'ksef-report:' + JSON.stringify([run.started, task.tenantId, task.id, task.from, task.to]);
+}
+async function rememberReport(run, task, downloadId) {
+  await chrome.storage.local.set({ [reportCheckpointKey(run, task)]: { downloadId } });
+}
+function completedFile(item) {
+  return item && item.state === 'complete' && item.exists !== false;
+}
+async function reportWasDownloaded(run, task) {
+  if (!task.report || !Number.isFinite(run.started)) return false;
+  const key = reportCheckpointKey(run, task);
+  const checkpoint = (await chrome.storage.local.get(key))[key];
+  if (checkpoint) {
+    const files = await chrome.downloads.search({ id: checkpoint.downloadId });
+    if (files.some(completedFile)) return true;
+  }
+  // Also recover reports downloaded by an older extension version, or just
+  // before the worker stopped. Never reuse a file from an earlier run.
+  const expected = fileNameFor('report', task, run, '.xlsx').replace(/\.xlsx$/, '');
+  const basename = expected.slice(expected.lastIndexOf('/') + 1);
+  const filenameRegex = basename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const files = await chrome.downloads.search({ state: 'complete',
+    startedAfter: new Date(run.started).toISOString(), filenameRegex });
+  const file = files.find(item => {
+    if (!completedFile(item) || !isSymfonia(item) || !(Date.parse(item.startTime) >= run.started)) return false;
+    const path = String(item.filename || '').replace(/\\/g, '/').replace(/(?: \(\d+\))?\.(xlsx?|csv)$/i, '');
+    return ['xlsx', 'xls', 'csv'].some(ext => new RegExp('\\.' + ext + '$', 'i').test(item.filename || '')) &&
+      (path === expected || path.endsWith('/' + expected));
+  });
+  if (!file) return false;
+  await rememberReport(run, task, file.id);
+  return true;
+}
+
 const isSymfonia = (item) => /^blob:https:\/\/app\.symfonia\.pl\//.test(item.url || '') || /app\.symfonia\.pl/.test(item.referrer || '');
 function claim(item) {
   let p = pending.find((x) => x.id === item.id);
@@ -112,12 +150,16 @@ chrome.downloads.onDeterminingFilename.addListener((item, suggest) => {
   suggest({ filename: p.filename(item.filename || ''), conflictAction: 'uniquify' });
 });
 
-chrome.downloads.onChanged.addListener((d) => {
+chrome.downloads.onChanged.addListener(async (d) => {
   const i = pending.findIndex((x) => x.id === d.id);
   if (i < 0 || !d.state) return;
   if (d.state.current === 'complete' || d.state.current === 'interrupted') {
     const p = pending.splice(i, 1)[0];
     clearTimeout(p.timer);
+    if (d.state.current === 'complete' && p.name === 'report') {
+      try { await rememberReport(p.run, p.task, d.id); }
+      catch (e) { p.resolve({ ok: false, error: 'plik pobrany, ale nie udało się zapamiętać postępu; wznów zadanie' }); return; }
+    }
     p.resolve(d.state.current === 'complete' ? { ok: true } : { ok: false, error: 'pobieranie przerwane' });
   }
 });
@@ -175,14 +217,22 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
       await setState(run);
       currentTask = t;
       await log((t.kind === 'purchase' ? 'Zakupy' : 'Sprzedaż') + ': ' + t.name + '…');
-      return reply(t);
+      let reportDownloaded;
+      try { reportDownloaded = await reportWasDownloaded(run, t); }
+      catch (e) {
+        await pause('Nie udało się sprawdzić wcześniej pobranego raportu XLS. Kliknij „Wznów”, żeby ponowić sprawdzenie.');
+        return reply(null);
+      }
+      const latest = await getState();
+      if (!latest || latest.started !== run.started || latest.idx !== run.idx || !latest.active || latest.paused) return reply(null);
+      return reply({ ...t, reportDownloaded });
     }
     if (msg.type === 'expectDownload') {
       const run = await getState();
       const t = currentTask || (run && run.tasks[run.idx]);
       if (!run || !t) return reply({ ok: false, error: 'brak aktywnego zadania' });
       const res = await new Promise((resolve) => {
-        const entry = { name: msg.name, resolve, filename: (orig) => fileNameFor(msg.name, t, run, orig) };
+        const entry = { name: msg.name, run, task: t, resolve, filename: (orig) => fileNameFor(msg.name, t, run, orig) };
         entry.timer = setTimeout(() => {
           const i = pending.indexOf(entry);
           if (i >= 0) pending.splice(i, 1);

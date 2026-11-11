@@ -1,5 +1,13 @@
 # KSeF – pobieranie miesięczne z aktualizacjami dla Edge, Chrome i Opera GX
 
+## Wersja 1.0.18: wznowienie bez ponownego XLS
+
+Po zakończeniu pobrania raportu XLS/XLSX wtyczka zapisuje potwierdzenie wraz z identyfikatorem pliku. Po błędzie późniejszego kroku i kliknięciu **Wznów** sprawdza pobrany plik i pomija zakończony eksport raportu; pobieranie faktur jest kontynuowane. Potwierdzenie przetrwa uśpienie pracownika rozszerzenia i aktualizację. W dzienniku pojawi się „Raport XLS już pobrany — pomijam ponowny eksport”.
+
+Dla zadania rozpoczętego we wcześniejszej wersji możliwe jest odzyskanie potwierdzenia z historii pobrań: wymagane są zakończone pobranie z Symfonii po rozpoczęciu bieżącego przebiegu, właściwy folder miesiąca i nazwa raportu firmy oraz rodzaju listy. Raport przerwany lub usunięty jest pobierany ponownie. Nowy przebieg uruchomiony przyciskiem **Rozpocznij** pobiera raporty od nowa. Usunięcie historii pobrań uniemożliwia potwierdzenie starszego pobrania. Poprawka nie usuwa istniejących duplikatów i nie zmienia ponawiania archiwów faktur.
+
+Test regresji: `node tests/report-resume.cjs` (ukończony XLS → błąd PDF → Wznów, restart pracownika, odzyskanie starego pobrania, usunięcie/przerwanie pliku, rozróżnienie firm, miesięcy i zakupu/sprzedaży).
+
 ## Instalacja dla użytkowników Windows 10/11
 
 1. Pobierz **Code → Download ZIP** z tego repozytorium i rozpakuj cały ZIP.
