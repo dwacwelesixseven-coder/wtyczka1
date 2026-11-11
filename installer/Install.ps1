@@ -30,19 +30,23 @@ try {
     }
     $hostFile = Join-Path $helper 'host.json'
     [IO.File]::WriteAllText($hostFile, ($hostManifest | ConvertTo-Json), (New-Object Text.UTF8Encoding($false)))
-    $registryPath = 'Software\Microsoft\Edge\NativeMessagingHosts\com.ksef_pobieranie.updater'
-    $registryKey = [Microsoft.Win32.Registry]::CurrentUser.CreateSubKey($registryPath)
-    try { $registryKey.SetValue('', $hostFile, [Microsoft.Win32.RegistryValueKind]::String) } finally { $registryKey.Dispose() }
+    # Opera / Opera GX use Chrome's native-messaging host registry location.
+    foreach ($browserKey in @('Microsoft\Edge', 'Google\Chrome')) {
+        $registryPath = 'Software\' + $browserKey + '\NativeMessagingHosts\com.ksef_pobieranie.updater'
+        $registryKey = [Microsoft.Win32.Registry]::CurrentUser.CreateSubKey($registryPath)
+        try { $registryKey.SetValue('', $hostFile, [Microsoft.Win32.RegistryValueKind]::String) } finally { $registryKey.Dispose() }
+    }
     try { Set-Clipboard -Value $extension } catch { Write-Host 'Nie udalo sie skopiowac sciezki do schowka. Skopiuj ja recznie.' }
     Write-Host ''
     Write-Host 'Gotowe. Folder wtyczki skopiowano do schowka:'
     Write-Host $extension
     Write-Host ''
-    Write-Host '1. W Edge otworz edge://extensions i wlacz Tryb dewelopera.'
+    Write-Host '1. Otworz edge://extensions, opera://extensions lub chrome://extensions.'
+    Write-Host '   Wlacz Tryb dewelopera.'
     Write-Host '2. Wylacz stara kopie wtyczki. Kliknij Zaladuj rozpakowane.'
     Write-Host '3. Wklej powyzszy folder (Ctrl+V) i zatwierdz.'
     Write-Host '4. Odswiez otwarte strony Symfonii.'
-    Write-Host 'Nowe wersje beda sprawdzane co godzine, gdy Edge jest uruchomiony.'
+    Write-Host 'Nowe wersje beda sprawdzane co godzine, gdy przegladarka jest uruchomiona.'
     Write-Host 'Poprzednie ustawienia starej kopii nie sa automatycznie przenoszone.'
     Start-Process explorer.exe -ArgumentList ('"' + $root + '"')
 } catch {

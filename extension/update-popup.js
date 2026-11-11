@@ -6,7 +6,7 @@ function showUpdateStatus(status) {
   if (!status) { updateStatus.textContent = 'Pierwsze sprawdzenie nastąpi w ciągu minuty.'; return; }
   const prefix = status.checkedAt ? new Date(status.checkedAt).toLocaleString('pl-PL') + ': ' : '';
   updateStatus.textContent = prefix + (status.error
-    ? 'Nie udało się sprawdzić aktualizacji. Sprawdź internet i instalację pomocnika.'
+    ? 'Nie udało się sprawdzić aktualizacji: ' + status.error
     : status.updated ? 'Zainstalowano wersję ' + status.version + '. Odśwież strony Symfonii.'
       : status.message || 'Wersja ' + status.version + ' jest aktualna.');
   updateStatus.title = status.error || '';

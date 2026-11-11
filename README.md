@@ -1,17 +1,17 @@
-# KSeF – pobieranie miesięczne z aktualizacjami dla Edge
+# KSeF – pobieranie miesięczne z aktualizacjami dla Edge, Chrome i Opera GX
 
 ## Instalacja dla użytkowników Windows 10/11
 
 1. Pobierz **Code → Download ZIP** z tego repozytorium i rozpakuj cały ZIP.
 2. Uruchom dwuklikiem **ZAINSTALUJ.cmd**. Nie uruchamiaj jako administrator.
-3. Otwórz `edge://extensions` i włącz **Tryb dewelopera**.
+3. Otwórz `edge://extensions` (Edge), `opera://extensions` (Opera / Opera GX) lub `chrome://extensions` (Chrome) i włącz **Tryb dewelopera**.
 4. Wyłącz dotychczasową kopię tej wtyczki, jeśli z niej korzystasz. Zachowaj ją do czasu sprawdzenia nowej instalacji.
 5. Wybierz **Załaduj rozpakowane**. Wklej ścieżkę skopiowaną przez instalator do schowka. Jest to `%LOCALAPPDATA%\KSeFUpdater\extension` (w polu wyboru folderu można też wkleić ten zapis).
 6. Odśwież otwarte strony Symfonii. Sprawdź ustawienia i wybór firm w nowej kopii.
 
 Ważne: wybierz folder z **KSeFUpdater**, a nie `extension` z pobranego ZIP-a. Tylko folder instalacyjny jest automatycznie aktualizowany. Nowa instalacja ma stałe ID `oinnmnoanfppijpbgacpoojmdioaicmj`. Ustawienia starej kopii o innym ID nie są przenoszone automatycznie. Pobrane faktury pozostają na swoim miejscu.
 
-Instalator kopiuje pliki do folderu bieżącego użytkownika i dodaje wpis pomocnika w `HKCU\Software\Microsoft\Edge\NativeMessagingHosts\com.ksef_pobieranie.updater`. Nie zakłada zadań cyklicznych ani usługi. Pomocnik działa wyłącznie na żądanie wtyczki. Zasady firmowe mogą blokować tryb dewelopera, PowerShell lub komunikację z lokalnymi aplikacjami.
+Instalator kopiuje pliki do folderu bieżącego użytkownika i dodaje wpisy pomocnika w `HKCU\Software\Microsoft\Edge\NativeMessagingHosts\com.ksef_pobieranie.updater` oraz `HKCU\Software\Google\Chrome\NativeMessagingHosts\com.ksef_pobieranie.updater` (Chrome / Opera / Opera GX). Nie zakłada zadań cyklicznych ani usługi. Pomocnik działa wyłącznie na żądanie wtyczki. Zasady firmowe mogą blokować tryb dewelopera, PowerShell lub komunikację z lokalnymi aplikacjami.
 
 ## Jak działają aktualizacje
 
@@ -45,3 +45,7 @@ Odznacz **Automatyczne aktualizacje** w oknie wtyczki. Aby całkowicie odłączy
 Jeśli nowa wersja wtyczki przestanie działać, zamknij Edge, zachowaj osobną kopię folderu `extension`, a następnie skopiuj zawartość `previous-extension` do `extension`. Po uruchomieniu Edge przeładuj wtyczkę w `edge://extensions` i wyłącz aktualizacje do czasu opublikowania poprawki. Kopia zapasowa obejmuje kod, a nie dane `chrome.storage`; przy zmianach formatu danych autor musi zadbać o zgodność.
 
 Instrukcja pobierania faktur: `extension/INSTRUKCJA.txt` (opis instalacji z tamtego pliku zastępują kroki powyżej).
+
+## Poprawka 1.0.4: Opera / Opera GX
+
+Instalator rejestruje teraz pomocnika także dla Chrome i Opery. Jeśli wcześniej zainstalowano pakiet 1.0.3 w Operze, pobierz obecny ZIP i uruchom ponownie ZAINSTALUJ.cmd. Folder wtyczki i jej dane zostaną zachowane. Następnie kliknij Sprawdź teraz; w razie potrzeby uruchom ponownie przeglądarkę. Komunikat błędu pokazuje teraz dokładny powód niepowodzenia.
